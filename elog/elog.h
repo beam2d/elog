@@ -184,8 +184,7 @@ template <typename Module> class verbose_log : noncopyable {
 };
 
 // Logging class for CHECK
-template <typename Error>
-class exception_log : noncopyable {
+template <typename Error> class exception_log : noncopyable {
   std::ostringstream oss_;
   log_level level_;
 
