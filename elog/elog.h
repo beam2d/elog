@@ -25,7 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// light weight log utility of C++
+// light weight log utility for C++
 
 #include <cstdlib>
 #include <exception>
@@ -41,7 +41,7 @@
 #endif
 #ifdef WIN32
 # include <windows.h>
-# undef ERROR  // conflicts with the symbol defined in windows.h
+# undef ERROR  // Log-level ERROR conflicts with the macro of windows.h
 #else
 # include <pthread.h>
 #endif
