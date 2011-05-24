@@ -27,7 +27,6 @@
 
 // light weight log utility for C++
 
-#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -50,15 +49,16 @@ namespace elog {
 
 enum avoid_odr { AVOID_ODR };
 
-namespace noncopyable_avoid_adl {
+namespace noncopyable_avoid_adl_ {
 class noncopyable {
   noncopyable(const noncopyable&);
   const noncopyable& operator=(const noncopyable&);
  protected:
   noncopyable() {}
+  ~noncopyable() {}
 };
-}  // namespace beam::noncopyable_avoid_adl
-using noncopyable_avoid_adl::noncopyable;
+}  // namespace beam::noncopyable_avoid_adl_
+using noncopyable_avoid_adl_::noncopyable;
 
 // module type identifier
 typedef char* type_id;
@@ -67,14 +67,14 @@ template <typename T> struct type_id_holder {
   static type_id get_id() { return &place; }
 };
 template <typename T> char type_id_holder<T>::place;
-template <typename T> inline type_id get_type_id() {
+template <typename T> type_id get_type_id() {
   return type_id_holder<T>::get_id();
 }
 
-template <typename MutexT> class lock_guard {
-  MutexT& mutex_;
+template <typename Mutex> class lock_guard {
+  Mutex& mutex_;
  public:
-  explicit lock_guard(MutexT& m) : mutex_(m) {
+  explicit lock_guard(Mutex& m) : mutex_(m) {
     m.lock();
   }
   ~lock_guard() {
@@ -110,9 +110,9 @@ enum log_level {
 };
 
 class logger_t {
+  std::ostream* stream_;
   std::tr1::unordered_map<type_id, int> module_verbosities_;
   mutex mutex_;
-  std::ostream* stream_;
   log_level level_;
 
  public:
