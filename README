@@ -1,0 +1,77 @@
+Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
+
+ELOG is a tiny logging library for C++.
+
+==============================================================================
+short description
+
+- Light weight logging utility for C++.
+- Consists of single header.
+- Syntax like google-glog with very limited features
+- Multi-thread ready
+- Supports GCC 4.0.1+ (with pthread) and VC++ 2010
+- Verbose logging with different verbosity for each user-defined module
+- MIT License
+
+
+==============================================================================
+usage
+
+Only you have to do before using ELOG is to locate and include "elog.h". You
+can `./waf install' to locate it, but locating manually is also ok.
+
+Basic logging syntax is similar to that of well known google-glog:
+
+  LOG(INFO) << "some message or value like " << 100 << '.';
+
+It accepts any value that ostream accepts. There are four levels of log: INFO,
+WARN, ERROR and FATAL. Especially INFO can be omitted:
+
+  LOG() << "INFO level message";
+
+Default level of LOG is INFO. It can be modified by:
+
+  elog::logger.level(elog::LOGLEVEL_ERROR);
+
+and then LOG(INFO) and LOG(WARN) will not omit any messages.
+
+LOG(FATAL) is special: it throws an exception of type elog::fatal_log after
+omitting the messages. ELOG does not have stack-trace feature like google-glog.
+
+ELOG has module-wise verbose logging syntax:
+
+  class user_defined_type;
+  LOG(user_defined_type, 1) << "module log with verbosity 1";
+
+Message is virtually output if the verbosity of message is not greater than
+module verbosity. Default module verbosity is 0. If you want to modify the
+module verbosity, write:
+
+  elog::logger.verbosity<user_defined_type>(2);
+
+and then LOG(user_defined_type, a) will output message if a <= 2.
+
+ELOG also has CHECK assertion:
+
+  CHECK(!some_critical_condition) << "some_critical_condition occured";
+
+It outputs messages only if the operand is true, and after that throws an
+exception of type elog::check_error.
+
+
+ELOG omits log messages to std::cerr by default. You can change output stream:
+
+  std::ostream& os = ...;
+  elog::logger.stream(os);
+
+All logging syntaxes are thread-safe (critical section), so output stream is
+not required to be thread-safe.
+
+LOG and CHECK have six other names:
+
+  DLOG, DCHECK: Disabled if NDEBUG is defined.
+  ELOG, DELOG, ECHECK, DECHECK: Aliases.
+
+LOG, CHECK, DLOG, DCHECK are not defined if ELOG_NO_SHORT_MACRO is defined.
+
+
