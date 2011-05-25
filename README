@@ -1,6 +1,6 @@
 Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
 
-ELOG is a tiny logging library for C++.
+eLog is a tiny logging library for C++.
 
 ==============================================================================
 short description
@@ -17,55 +17,74 @@ short description
 ==============================================================================
 usage
 
-Only you have to do before using ELOG is to locate and include "elog.h". You
-can `./waf install' to locate it, but locating manually is also ok.
+eLog consists of only one header file 'elog.h'. If python is installed,
+`./waf install' installs elog.h into the standard include directory, e.g.
+/usr/local/include. Of course you can manually place it anywhere.
 
 Basic logging syntax is similar to that of well known google-glog:
 
   LOG(INFO) << "some message or value like " << 100 << '.';
 
-It accepts any value that ostream accepts. There are four levels of log: INFO,
-WARN, ERROR and FATAL. Especially INFO can be omitted:
+operator<< of LOG(...) accepts any value that ostream accepts. There are four
+levels of log: INFO, WARN, ERROR and FATAL. Especially INFO can be omitted:
 
   LOG() << "INFO level message";
 
-Default level of LOG is INFO. It can be modified by:
+Messages of any level are omitted by default. It can be modified by:
 
   LOG::logger.level(LOG::LOGLEVEL_ERROR);
 
 and then LOG(INFO) and LOG(WARN) will not omit any messages.
 
 LOG(FATAL) is special: it throws an exception of type LOG::fatal_log after
-omitting the messages. ELOG does not have stack-trace feature like google-glog.
+omitting the messages. eLog does not have stack-trace feature like google-glog.
 
-ELOG has module-wise verbose logging syntax:
+eLog has module-wise verbose logging syntax:
 
-  class user_defined_type;
-  LOG(user_defined_type, 1) << "module log with verbosity 1";
+  LOG(some_type, 1) << "module log with verbosity 1";
 
-Message is virtually output if the verbosity of message is not greater than
-module verbosity. Default module verbosity is 0. If you want to modify the
-module verbosity, write:
+The first argument, called 'module type', can be any type. Typically user
+define empty class representing a module and use it like:
 
-  LOG::logger.verbosity<user_defined_type>(2);
+  class keyinput;  // Definition is not required
+  ...
+  LOG(keyinput, 1) << "verbose log about key input module";
 
-and then LOG(user_defined_type, a) will output message if a <= 2.
+Or another typical usage is setting it to the class of the function which
+includes the logging line:
 
-ELOG also has CHECK assertion:
+  class some_class {
+    void method() {
+      LOG(some_class, 0) << "verbose log from some_class";
+    }
+  };
+
+The second argument is verbosity of the message. LOG(type, N) outputs messages
+if N is not greater than module verbosity. Default verbosity of each module is
+0. You can modify verbosity of each module by writing:
+
+  LOG::logger.verbosity<module_type>(2);
+
+and then LOG(module_type, N) will output messages only if N <= 2.
+
+eLog also has assertion syntax:
 
   CHECK(!some_critical_condition) << "some_critical_condition occured";
 
-It outputs messages only if the operand is true, and after that throws an
+It outputs messages only if the operand is false, and after that throws an
 exception of type LOG::check_error.
 
-
-ELOG omits log messages to std::cerr by default. You can change output stream:
+eLog omits log messages to std::cerr by default. You can change this output
+stream by:
 
   std::ostream& os = ...;
   LOG::logger.stream(os);
 
-All logging syntaxes are thread-safe (critical section), so output stream is
-not required to be thread-safe.
+All logging syntaxes are thread-safe, so output stream is not required to be
+thread-safe.
 
 There are debug version of LOG and CHECK, named DLOG and DCHECK. They omit
 nothing if NDEBUG is not defined.
+
+NOTE(g++): LOG(...) uses compiler extensions when used, so LOG(...) will
+produce compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).
