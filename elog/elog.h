@@ -234,17 +234,17 @@ struct void_op {
 # define ELOG_DETAIL_PAREN_L (
 # define ELOG_DETAIL_PAREN_R )
 #endif
-
-#define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I((x, y))
-#define ELOG_DETAIL_CAT_I(xy) ELOG_DETAIL_CAT_II xy
-#define ELOG_DETAIL_CAT_II(x, y) x ## y
+#define ELOG_DETAIL_EXPAND(x) ELOG_DETAIL_EXPAND_I(x)
+#define ELOG_DETAIL_EXPAND_I(x) x
+#define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I ELOG_DETAIL_EXPAND((x, y))
+#define ELOG_DETAIL_CAT_I(x, y) x ## y
 
 // Macro overload
 #define ELOG_DETAIL_TUPLE_LEN(tuple) ELOG_DETAIL_TUPLE_LEN_I tuple
 #ifdef _MSC_VER
 # define ELOG_DETAIL_TUPLE_LEN_I(...) \
-  ELOG_DETAIL_TUPLE_LEN_II \
-  ELOG_DETAIL_PAREN_L _, __VA_ARGS__, 2, 1, 0, _ ELOG_DETAIL_PAREN_R
+    ELOG_DETAIL_TUPLE_LEN_II \
+    ELOG_DETAIL_PAREN_L _, __VA_ARGS__, 2, 1, 0, _ ELOG_DETAIL_PAREN_R
 #else  // _MSC_VER
 # define ELOG_DETAIL_TUPLE_LEN_I(...) \
   ELOG_DETAIL_TUPLE_LEN_II(_, ##__VA_ARGS__, 2, 1, 0, _)
