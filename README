@@ -86,5 +86,5 @@ thread-safe.
 There are debug version of LOG and CHECK, named DLOG and DCHECK. They omit
 nothing if NDEBUG is not defined.
 
-NOTE(g++): LOG(...) uses compiler extensions when used, so LOG(...) will
-produce compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).
+NOTE(g++): LOG(...) uses compiler extensions, so LOG(...) will produce
+compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).
