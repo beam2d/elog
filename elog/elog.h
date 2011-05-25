@@ -38,7 +38,7 @@
 #else
 # include <unordered_map>
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 # include <windows.h>
 # undef ERROR  // Log-level ERROR conflicts with the macro of windows.h
 #else
@@ -82,7 +82,7 @@ template <typename Mutex> class lock_guard {
   }
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 class mutex {
   CRITICAL_SECTION critical_section_;
  public:
@@ -91,7 +91,7 @@ class mutex {
   void lock() { EnterCriticalSection(&critical_section_); }
   void unlock() { LeaveCriticalSection(&critical_section_); }
 };
-#else  // WIN32
+#else  // _WIN32
 class mutex {
   pthread_mutex_t pthread_mutex_;
  public:
@@ -100,7 +100,7 @@ class mutex {
   void lock() { pthread_mutex_lock(&pthread_mutex_); }
   void unlock() { pthread_mutex_unlock(&pthread_mutex_); }
 };
-#endif  // WIN32
+#endif  // _WIN32
 
 enum log_level {
   LOGLEVEL_INFO = 0,
@@ -222,48 +222,54 @@ struct void_op {
 
 }  // namespace elog
 
-#define ELOG_I_STRINGIZE(x) ELOG_I_STRINGIZE_(x)
-#define ELOG_I_STRINGIZE_(x) #x
+#define ELOG_DETAIL_STRINGIZE(x) ELOG_DETAIL_STRINGIZE_I(x)
+#define ELOG_DETAIL_STRINGIZE_I(x) #x
 #ifdef _MSC_VER
-# define ELOG_I_LINE __COUNTER__
+# define ELOG_DETAIL_LINE __COUNTER__
 #else
-# define ELOG_I_LINE __LINE__
+# define ELOG_DETAIL_LINE __LINE__
 #endif
 
-#define ELOG_I_CAT(x, y) ELOG_I_CAT_(x, y)
-#define ELOG_I_CAT_(x, y) x ## y
+#ifdef _MSC_VER
+# define ELOG_DETAIL_PAREN_L (
+# define ELOG_DETAIL_PAREN_R )
+#endif
+
+#define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I((x, y))
+#define ELOG_DETAIL_CAT_I(xy) ELOG_DETAIL_CAT_II xy
+#define ELOG_DETAIL_CAT_II(x, y) x ## y
 
 // Macro overload
-#define ELOG_I_TUPLE_LEN(tuple) ELOG_I_TUPLE_LEN_ tuple
+#define ELOG_DETAIL_TUPLE_LEN(tuple) ELOG_DETAIL_TUPLE_LEN_I tuple
 #ifdef _MSC_VER
-# define ELOG_I_TUPLE_LEN_(...) \
-  ELOG_I_TUPLE_LEN_AUX_((_, __VA_ARGS__, 2, 1, 0, _))
+# define ELOG_DETAIL_TUPLE_LEN_I(...) \
+  ELOG_DETAIL_TUPLE_LEN_II \
+  ELOG_DETAIL_PAREN_L _, __VA_ARGS__, 2, 1, 0, _ ELOG_DETAIL_PAREN_R
 #else  // _MSC_VER
-# define ELOG_I_TUPLE_LEN_(...) \
-  ELOG_I_TUPLE_LEN_AUX_((_, ##__VA_ARGS__, 2, 1, 0, _))
+# define ELOG_DETAIL_TUPLE_LEN_I(...) \
+  ELOG_DETAIL_TUPLE_LEN_II(_, ##__VA_ARGS__, 2, 1, 0, _)
 #endif  // _MSC_VER
-#define ELOG_I_TUPLE_LEN_AUX_(tuple) ELOG_I_TUPLE_LEN_AUX_I_ tuple
-#define ELOG_I_TUPLE_LEN_AUX_I_(_0, _1, _2, n, ...) n
-#define ELOG_I_OVERLOAD(name, ...) \
-  ELOG_I_CAT(name, ELOG_I_TUPLE_LEN((__VA_ARGS__)))(__VA_ARGS__)
+#define ELOG_DETAIL_TUPLE_LEN_II(_0, _1, _2, n, ...) n
+#define ELOG_DETAIL_OVERLOAD(name, ...) \
+  ELOG_DETAIL_CAT(name, ELOG_DETAIL_TUPLE_LEN((__VA_ARGS__)))(__VA_ARGS__)
 
-#define ELOG_I_LEVELVALUE_(level) ::elog::LOGLEVEL_ ## level
+#define ELOG_DETAIL_LEVELVALUE(level) ::elog::LOGLEVEL_ ## level
 
 // ELOG_PREFIX can be defined by users
 #ifndef ELOG_PREFIX
 # define ELOG_PREFIX(type) \
-  "[" type "] " __FILE__ "(" ELOG_I_STRINGIZE(ELOG_I_LINE) "): "
+  "[" type "] " __FILE__ "(" ELOG_DETAIL_STRINGIZE(ELOG_DETAIL_LINE) "): "
 #endif
 
 // ELOG is overloaded
-#define ELOG(...) ELOG_I_OVERLOAD(ELOG_I_ELOG_, __VA_ARGS__)
-#define ELOG_I_ELOG_0() ELOG_I_ELOG_1(INFO)
-#define ELOG_I_ELOG_1(level) \
+#define ELOG(...) ELOG_DETAIL_OVERLOAD(ELOG_DETAIL_ELOG_, __VA_ARGS__)
+#define ELOG_DETAIL_ELOG_0() ELOG_DETAIL_ELOG_1(INFO)
+#define ELOG_DETAIL_ELOG_1(level) \
   ::elog::log_write_trigger() & \
-  (::elog::log_of_level<ELOG_I_LEVELVALUE_(level)>:: \
-   type(ELOG_I_LEVELVALUE_(level))) \
+  (::elog::log_of_level<ELOG_DETAIL_LEVELVALUE(level)>:: \
+   type(ELOG_DETAIL_LEVELVALUE(level))) \
   << ELOG_PREFIX(#level)
-#define ELOG_I_ELOG_2(module, verbosity) \
+#define ELOG_DETAIL_ELOG_2(module, verbosity) \
   ::elog::log_write_trigger() & \
   (::elog::verbose_log<module>(verbosity)) \
   << ELOG_PREFIX(#module "(" #verbosity ")")
@@ -273,10 +279,10 @@ struct void_op {
   (::elog::exception_log< ::elog::check_error>()) << ELOG_PREFIX("CHECK")
 
 #ifdef NDEBUG
-# define ELOG_NULL_STREAM_ \
+# define ELOG_DETAIL_NULL_STREAM \
   1 ? (void)0 : ::elog::null_stream::void_op() & ::elog::null_stream()
-# define DELOG(...) ELOG_NULL_STREAM_
-# define DECHECK(...) ELOG_NULL_STREAM_
+# define DELOG(...) ELOG_DETAIL_NULL_STREAM
+# define DECHECK(...) ELOG_DETAIL_NULL_STREAM
 #else
 # define DELOG ELOG
 # define DECHECK ECHECK
