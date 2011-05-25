@@ -9,7 +9,7 @@ short description
 - Consists of single header.
 - Syntax like google-glog with very limited features
 - Multi-thread ready
-- Supports GCC 4.0.1+ (with pthread) and VC++ 2010
+- Supports g++ 4.2.1+ (using GNU extension) and VC++ 2010
 - Verbose logging with different verbosity for each user-defined module
 - MIT License
 
@@ -31,11 +31,11 @@ WARN, ERROR and FATAL. Especially INFO can be omitted:
 
 Default level of LOG is INFO. It can be modified by:
 
-  elog::logger.level(elog::LOGLEVEL_ERROR);
+  LOG::logger.level(LOG::LOGLEVEL_ERROR);
 
 and then LOG(INFO) and LOG(WARN) will not omit any messages.
 
-LOG(FATAL) is special: it throws an exception of type elog::fatal_log after
+LOG(FATAL) is special: it throws an exception of type LOG::fatal_log after
 omitting the messages. ELOG does not have stack-trace feature like google-glog.
 
 ELOG has module-wise verbose logging syntax:
@@ -47,7 +47,7 @@ Message is virtually output if the verbosity of message is not greater than
 module verbosity. Default module verbosity is 0. If you want to modify the
 module verbosity, write:
 
-  elog::logger.verbosity<user_defined_type>(2);
+  LOG::logger.verbosity<user_defined_type>(2);
 
 and then LOG(user_defined_type, a) will output message if a <= 2.
 
@@ -56,22 +56,16 @@ ELOG also has CHECK assertion:
   CHECK(!some_critical_condition) << "some_critical_condition occured";
 
 It outputs messages only if the operand is true, and after that throws an
-exception of type elog::check_error.
+exception of type LOG::check_error.
 
 
 ELOG omits log messages to std::cerr by default. You can change output stream:
 
   std::ostream& os = ...;
-  elog::logger.stream(os);
+  LOG::logger.stream(os);
 
 All logging syntaxes are thread-safe (critical section), so output stream is
 not required to be thread-safe.
 
-LOG and CHECK have six other names:
-
-  DLOG, DCHECK: Disabled if NDEBUG is defined.
-  ELOG, DELOG, ECHECK, DECHECK: Aliases.
-
-LOG, CHECK, DLOG, DCHECK are not defined if ELOG_NO_SHORT_MACRO is defined.
-
-
+There are debug version of LOG and CHECK, named DLOG and DCHECK. They omit
+nothing if NDEBUG is not defined.

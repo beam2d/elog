@@ -10,11 +10,11 @@ class logger_test : public ::testing::Test {
  protected:
   virtual void SetUp() {
     reset();
-    elog::logger.stream(o_);
+    LOG::logger.stream(o_);
   }
 
   virtual void TearDown() {
-    elog::logger.stream(cerr);
+    LOG::logger.stream(cerr);
   }
 
   void reset() {
@@ -50,10 +50,10 @@ TEST_F(logger_test, level) {
   EXPECT_FALSE(str().empty());
 
   reset();
-  EXPECT_THROW(ELOG(FATAL) << "message", elog::fatal_log);
+  EXPECT_THROW(LOG(FATAL) << "message", LOG::fatal_log);
   EXPECT_FALSE(str().empty());
 
-  elog::logger.level(elog::LOGLEVEL_ERROR);
+  LOG::logger.level(LOG::LOGLEVEL_ERROR);
 
   reset();
   LOG() << "message";
@@ -74,7 +74,7 @@ TEST_F(logger_test, level) {
 
 TEST_F(logger_test, check) {
   EXPECT_NO_THROW(CHECK(1) << "message");
-  EXPECT_THROW(CHECK(0) << "message", elog::check_error);
+  EXPECT_THROW(CHECK(0) << "message", LOG::check_error);
   EXPECT_FALSE(str().empty());
   EXPECT_EQ(0, str().find("[CHECK]"));
 }
@@ -83,7 +83,7 @@ class some_module {};
 class another_module {};
 
 TEST_F(logger_test, vlog) {
-  elog::logger.verbosity<some_module>(1);
+  LOG::logger.verbosity<some_module>(1);
 
   LOG(some_module, 0) << "message";
   EXPECT_FALSE(str().empty());
@@ -103,7 +103,7 @@ TEST_F(logger_test, vlog) {
   EXPECT_TRUE(str().empty());
 
   reset();
-  elog::logger.verbosity<another_module>(3);
+  LOG::logger.verbosity<another_module>(3);
   LOG(another_module, 3) << "message";
   EXPECT_FALSE(str().empty());
 }

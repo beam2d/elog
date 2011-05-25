@@ -45,7 +45,7 @@
 # include <pthread.h>
 #endif
 
-namespace elog {
+namespace LOG {
 
 enum avoid_odr { AVOID_ODR };
 
@@ -220,40 +220,37 @@ struct void_op {
   void operator&(null_stream) const {}
 };
 
-}  // namespace elog
+}  // namespace LOG
 
 #define ELOG_DETAIL_STRINGIZE(x) ELOG_DETAIL_STRINGIZE_I(x)
 #define ELOG_DETAIL_STRINGIZE_I(x) #x
+#define ELOG_DETAIL_CAT_I(x, y) x ## y
 #ifdef _MSC_VER
 # define ELOG_DETAIL_LINE __COUNTER__
-#else
-# define ELOG_DETAIL_LINE __LINE__
-#endif
-
-#ifdef _MSC_VER
 # define ELOG_DETAIL_PAREN_L (
 # define ELOG_DETAIL_PAREN_R )
+# define ELOG_DETAIL_EXPAND(x) ELOG_DETAIL_EXPAND_I(x)
+# define ELOG_DETAIL_EXPAND_I(x) x
+# define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I ELOG_DETAIL_EXPAND((x, y))
+#else
+# define ELOG_DETAIL_LINE __LINE__
+# define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I(x, y)
 #endif
-#define ELOG_DETAIL_EXPAND(x) ELOG_DETAIL_EXPAND_I(x)
-#define ELOG_DETAIL_EXPAND_I(x) x
-#define ELOG_DETAIL_CAT(x, y) ELOG_DETAIL_CAT_I ELOG_DETAIL_EXPAND((x, y))
-#define ELOG_DETAIL_CAT_I(x, y) x ## y
 
 // Macro overload
-#define ELOG_DETAIL_TUPLE_LEN(tuple) ELOG_DETAIL_TUPLE_LEN_I tuple
 #ifdef _MSC_VER
-# define ELOG_DETAIL_TUPLE_LEN_I(...) \
-    ELOG_DETAIL_TUPLE_LEN_II \
+# define ELOG_DETAIL_TUPLE_LEN(...) \
+    ELOG_DETAIL_TUPLE_LEN_I \
     ELOG_DETAIL_PAREN_L _, __VA_ARGS__, 2, 1, 0, _ ELOG_DETAIL_PAREN_R
-#else  // _MSC_VER
-# define ELOG_DETAIL_TUPLE_LEN_I(...) \
-  ELOG_DETAIL_TUPLE_LEN_II(_, ##__VA_ARGS__, 2, 1, 0, _)
-#endif  // _MSC_VER
-#define ELOG_DETAIL_TUPLE_LEN_II(_0, _1, _2, n, ...) n
+#else
+# define ELOG_DETAIL_TUPLE_LEN(...) \
+  ELOG_DETAIL_TUPLE_LEN_I(_, ##__VA_ARGS__, 2, 1, 0, _)
+#endif
+#define ELOG_DETAIL_TUPLE_LEN_I(_0, _1, _2, n, ...) n
 #define ELOG_DETAIL_OVERLOAD(name, ...) \
-  ELOG_DETAIL_CAT(name, ELOG_DETAIL_TUPLE_LEN((__VA_ARGS__)))(__VA_ARGS__)
+  ELOG_DETAIL_CAT(name, ELOG_DETAIL_TUPLE_LEN(__VA_ARGS__))(__VA_ARGS__)
 
-#define ELOG_DETAIL_LEVELVALUE(level) ::elog::LOGLEVEL_ ## level
+#define ELOG_DETAIL_LEVELVALUE(level) ::LOG::LOGLEVEL_ ## level
 
 // ELOG_PREFIX can be defined by users
 #ifndef ELOG_PREFIX
@@ -261,36 +258,29 @@ struct void_op {
   "[" type "] " __FILE__ "(" ELOG_DETAIL_STRINGIZE(ELOG_DETAIL_LINE) "): "
 #endif
 
-// ELOG is overloaded
-#define ELOG(...) ELOG_DETAIL_OVERLOAD(ELOG_DETAIL_ELOG_, __VA_ARGS__)
+// LOG is overloaded
+#define LOG(...) ELOG_DETAIL_OVERLOAD(ELOG_DETAIL_ELOG_, __VA_ARGS__)
 #define ELOG_DETAIL_ELOG_0() ELOG_DETAIL_ELOG_1(INFO)
 #define ELOG_DETAIL_ELOG_1(level) \
-  ::elog::log_write_trigger() & \
-  (::elog::log_of_level<ELOG_DETAIL_LEVELVALUE(level)>:: \
+  ::LOG::log_write_trigger() & \
+  (::LOG::log_of_level<ELOG_DETAIL_LEVELVALUE(level)>:: \
    type(ELOG_DETAIL_LEVELVALUE(level))) \
   << ELOG_PREFIX(#level)
 #define ELOG_DETAIL_ELOG_2(module, verbosity) \
-  ::elog::log_write_trigger() & \
-  (::elog::verbose_log<module>(verbosity)) \
+  ::LOG::log_write_trigger() & \
+  (::LOG::verbose_log<module>(verbosity)) \
   << ELOG_PREFIX(#module "(" #verbosity ")")
 
-#define ECHECK(cond) \
-  (cond) ? (void)0 : ::elog::log_write_trigger() & \
-  (::elog::exception_log< ::elog::check_error>()) << ELOG_PREFIX("CHECK")
+#define CHECK(cond) \
+  (cond) ? (void)0 : ::LOG::log_write_trigger() & \
+  (::LOG::exception_log< ::LOG::check_error>()) << ELOG_PREFIX("CHECK")
 
 #ifdef NDEBUG
 # define ELOG_DETAIL_NULL_STREAM \
-  1 ? (void)0 : ::elog::null_stream::void_op() & ::elog::null_stream()
-# define DELOG(...) ELOG_DETAIL_NULL_STREAM
-# define DECHECK(...) ELOG_DETAIL_NULL_STREAM
+  1 ? (void)0 : ::LOG::null_stream::void_op() & ::LOG::null_stream()
+# define DLOG(...) ELOG_DETAIL_NULL_STREAM
+# define DCHECK(...) ELOG_DETAIL_NULL_STREAM
 #else
-# define DELOG ELOG
-# define DECHECK ECHECK
+# define DLOG LOG
+# define DCHECK CHECK
 #endif  // NDEBUG
-
-#if !defined(ELOG_NO_SHORT_MACRO)
-# define LOG ELOG
-# define CHECK ECHECK
-# define DLOG DELOG
-# define DCHECK DECHECK
-#endif
