@@ -30,14 +30,14 @@ levels of log: INFO, WARN, ERROR and FATAL. Especially INFO can be omitted:
 
   LOG() << "INFO level message";
 
-Messages of any level are omitted by default. It can be modified by:
+Messages of any level are emitted by default. It can be modified by:
 
   LOG::logger.level(LOG::LOGLEVEL_ERROR);
 
-and then LOG(INFO) and LOG(WARN) will not omit any messages.
+and then LOG(INFO) and LOG(WARN) will not output any messages.
 
 LOG(FATAL) is special: it throws an exception of type LOG::fatal_log after
-omitting the messages. eLog does not have stack-trace feature like google-glog.
+outputing the messages. eLog does not have stack-trace feature like google-glog.
 
 eLog has module-wise verbose logging syntax:
 
@@ -74,7 +74,7 @@ eLog also has assertion syntax:
 It outputs messages only if the operand is false, and after that throws an
 exception of type LOG::check_error.
 
-eLog omits log messages to std::cerr by default. You can change this output
+eLog outputs log messages to std::cerr by default. You can change this output
 stream by:
 
   std::ostream& os = ...;
@@ -83,7 +83,7 @@ stream by:
 All logging syntaxes are thread-safe, so output stream is not required to be
 thread-safe.
 
-There are debug version of LOG and CHECK, named DLOG and DCHECK. They omit
+There are debug version of LOG and CHECK, named DLOG and DCHECK. They output
 nothing if NDEBUG is not defined.
 
 NOTE(g++): LOG(...) uses compiler extensions, so LOG(...) will produce
