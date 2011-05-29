@@ -25,13 +25,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// light weight log utility for C++
+// light weight logging utility for C++
 
 #include <exception>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 #include <vector>
 #ifdef __GNUC__
 # include <tr1/unordered_map>
@@ -48,17 +47,6 @@
 namespace LOG {
 
 enum avoid_odr { AVOID_ODR };
-
-namespace noncopyable_avoid_adl_ {
-class noncopyable {
-  noncopyable(const noncopyable&);
-  const noncopyable& operator=(const noncopyable&);
- protected:
-  noncopyable() {}
-  ~noncopyable() {}
-};
-}  // namespace beam::noncopyable_avoid_adl_
-using noncopyable_avoid_adl_::noncopyable;
 
 // module type identifier
 typedef char* type_id;
@@ -82,25 +70,23 @@ template <typename Mutex> class lock_guard {
   }
 };
 
-#ifdef _WIN32
 class mutex {
+#ifdef _WIN32
   CRITICAL_SECTION critical_section_;
  public:
   mutex() { InitializeCriticalSection(&critical_section_); }
   ~mutex() { DeleteCriticalSection(&critical_section_); }
   void lock() { EnterCriticalSection(&critical_section_); }
   void unlock() { LeaveCriticalSection(&critical_section_); }
-};
 #else  // _WIN32
-class mutex {
   pthread_mutex_t pthread_mutex_;
  public:
   mutex() { pthread_mutex_init(&pthread_mutex_, 0); }
   ~mutex() { pthread_mutex_destroy(&pthread_mutex_); }
   void lock() { pthread_mutex_lock(&pthread_mutex_); }
   void unlock() { pthread_mutex_unlock(&pthread_mutex_); }
-};
 #endif  // _WIN32
+};
 
 enum log_level {
   LOGLEVEL_INFO = 0,
@@ -152,7 +138,7 @@ template <avoid_odr N> logger_t logger_holder<N>::logger;
 static logger_t& logger = logger_holder<AVOID_ODR>::logger;
 
 // Logging class for LOG(level)
-class general_log : noncopyable {
+class general_log {
   std::ostringstream oss_;
   log_level level_;
 
@@ -168,7 +154,7 @@ class general_log : noncopyable {
 };
 
 // Module-specified logging class for LOG(module, verbosity)
-template <typename Module> class verbose_log : noncopyable {
+template <typename Module> class verbose_log {
   std::ostringstream oss_;
   int verbosity_;
 
@@ -184,7 +170,7 @@ template <typename Module> class verbose_log : noncopyable {
 };
 
 // Logging class for CHECK
-template <typename Error> class exception_log : noncopyable {
+template <typename Error> class exception_log {
   std::ostringstream oss_;
   log_level level_;
 
@@ -205,19 +191,18 @@ struct log_write_trigger {
     t.write();
   }
 };
+struct null_stream {
+  template <typename T> null_stream& operator<<(T) const { return *this; }
+};
+struct void_op {
+  void operator&(null_stream) const {}
+};
 
 template <log_level L> struct log_of_level {
   typedef general_log type;
 };
 template <> struct log_of_level<LOGLEVEL_FATAL> {
   typedef exception_log<fatal_log> type;
-};
-
-struct null_stream {
-  template <typename T> null_stream& operator<<(T) const { return *this; }
-};
-struct void_op {
-  void operator&(null_stream) const {}
 };
 
 }  // namespace LOG
