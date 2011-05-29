@@ -46,7 +46,8 @@
 
 namespace LOG {
 
-enum avoid_odr { AVOID_ODR };
+template <typename T> struct global { static T value; };
+template <typename T> T global<T>::value;
 
 // module type identifier
 typedef char* type_id;
@@ -124,18 +125,13 @@ class logger_t {
     (*stream_) << message << std::endl;
   }
 };
+static logger_t& logger = global<logger_t>::value;
 
 // Thrown on (D)CHECK failure
 class check_error : virtual std::exception {};
 
 // Thrown by (D)LOG(FATAL)
 class fatal_log : virtual std::exception {};
-
-template <avoid_odr> struct logger_holder {
-  static logger_t logger;
-};
-template <avoid_odr N> logger_t logger_holder<N>::logger;
-static logger_t& logger = logger_holder<AVOID_ODR>::logger;
 
 // Logging class for LOG(level)
 class general_log {
