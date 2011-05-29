@@ -53,7 +53,7 @@ TEST_F(logger_test, level) {
   EXPECT_THROW(LOG(FATAL) << "message", LOG::fatal_log);
   EXPECT_FALSE(str().empty());
 
-  LOG::logger.level(LOG::LOGLEVEL_ERROR);
+  LOG::logger.level(LOG::ERROR);
 
   reset();
   LOG() << "message";

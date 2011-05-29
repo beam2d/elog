@@ -85,10 +85,10 @@ class mutex {
 };
 
 enum log_level {
-  LOGLEVEL_INFO = 0,
-  LOGLEVEL_WARN,
-  LOGLEVEL_ERROR,
-  LOGLEVEL_FATAL
+  INFO = 0,
+  WARN,
+  ERROR,
+  FATAL
 };
 
 class logger_t {
@@ -98,7 +98,7 @@ class logger_t {
   log_level level_;
 
  public:
-  logger_t() : stream_(&std::cerr), level_(LOGLEVEL_INFO) {}
+  logger_t() : stream_(&std::cerr), level_(INFO) {}
 
   void level(log_level l) { level_ = l; }
   void stream(std::ostream& s) { stream_ = &s; }
@@ -166,7 +166,7 @@ template <typename Error> class exception_log {
   log_level level_;
 
  public:
-  explicit exception_log(log_level l = LOGLEVEL_FATAL) : level_(l) {}
+  explicit exception_log(log_level l = FATAL) : level_(l) {}
   void write() const {
     logger.write(level_, oss_.str());
     throw Error();
@@ -192,7 +192,7 @@ struct void_op {
 template <log_level L> struct log_of_level {
   typedef general_log type;
 };
-template <> struct log_of_level<LOGLEVEL_FATAL> {
+template <> struct log_of_level<FATAL> {
   typedef exception_log<fatal_log> type;
 };
 
@@ -226,8 +226,6 @@ template <> struct log_of_level<LOGLEVEL_FATAL> {
 #define ELOG_DETAIL_OVERLOAD(name, ...) \
   ELOG_DETAIL_CAT(name, ELOG_DETAIL_TUPLE_LEN(__VA_ARGS__))(__VA_ARGS__)
 
-#define ELOG_DETAIL_LEVELVALUE(level) ::LOG::LOGLEVEL_ ## level
-
 // ELOG_PREFIX can be defined by users
 #ifndef ELOG_PREFIX
 # define ELOG_PREFIX(type) \
@@ -239,8 +237,8 @@ template <> struct log_of_level<LOGLEVEL_FATAL> {
 #define ELOG_DETAIL_ELOG_0() ELOG_DETAIL_ELOG_1(INFO)
 #define ELOG_DETAIL_ELOG_1(level) \
   ::LOG::log_write_trigger() & \
-  (::LOG::log_of_level<ELOG_DETAIL_LEVELVALUE(level)>:: \
-   type(ELOG_DETAIL_LEVELVALUE(level))) \
+  (::LOG::log_of_level< ::LOG::level>:: \
+   type(::LOG::level)) \
   << ELOG_PREFIX(#level)
 #define ELOG_DETAIL_ELOG_2(module, verbosity) \
   ::LOG::log_write_trigger() & \
