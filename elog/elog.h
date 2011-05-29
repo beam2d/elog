@@ -46,6 +46,14 @@
 
 namespace LOG {
 
+class noncopyable {
+  noncopyable(const noncopyable&);
+  noncopyable& operator=(const noncopyable&);
+ protected:
+  noncopyable() {}
+  ~noncopyable() {}
+};
+
 template <typename T> struct global { static T value; };
 template <typename T> T global<T>::value;
 
@@ -55,7 +63,7 @@ template <typename T> struct type_id_place { static char place; };
 template <typename T> char type_id_place<T>::place;
 template <typename T> type_id get_type_id() { return &type_id_place<T>::place; }
 
-template <typename Mutex> class lock_guard {
+template <typename Mutex> class lock_guard : noncopyable {
   Mutex& mutex_;
  public:
   explicit lock_guard(Mutex& m) : mutex_(m) {
@@ -66,7 +74,7 @@ template <typename Mutex> class lock_guard {
   }
 };
 
-class mutex {
+class mutex : noncopyable {
 #ifdef _WIN32
   CRITICAL_SECTION critical_section_;
  public:
