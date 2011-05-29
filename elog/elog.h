@@ -51,14 +51,9 @@ template <typename T> T global<T>::value;
 
 // module type identifier
 typedef char* type_id;
-template <typename T> struct type_id_holder {
-  static char place;
-  static type_id get_id() { return &place; }
-};
-template <typename T> char type_id_holder<T>::place;
-template <typename T> type_id get_type_id() {
-  return type_id_holder<T>::get_id();
-}
+template <typename T> struct type_id_place { static char place; };
+template <typename T> char type_id_place<T>::place;
+template <typename T> type_id get_type_id() { return &type_id_place<T>::place; }
 
 template <typename Mutex> class lock_guard {
   Mutex& mutex_;
