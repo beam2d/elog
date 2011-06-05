@@ -87,7 +87,7 @@ TEST_F(logger_test, vlog) {
 
   LOG(some_module, 0) << "message";
   EXPECT_FALSE(str().empty());
-  EXPECT_EQ(0, str().find("[some_module(0)]"));
+  EXPECT_NE(string::npos, str().find("some_module, 0"));
   EXPECT_NE(string::npos, str().find("message"));
 
   reset();

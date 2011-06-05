@@ -31,9 +31,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <typeinfo>
 #include <vector>
 #ifdef __GNUC__
 # include <tr1/unordered_map>
+# include <cxxabi.h>
 #else
 # include <unordered_map>
 #endif
@@ -45,6 +47,8 @@
 #endif
 
 namespace LOG {
+
+enum avoid_odr { AVOID_ODR };
 
 class noncopyable {
   noncopyable(const noncopyable&);
@@ -58,10 +62,26 @@ template <typename T> struct global { static T value; };
 template <typename T> T global<T>::value;
 
 // module type identifier
-typedef char* type_id;
-template <typename T> struct type_id_place { static char place; };
-template <typename T> char type_id_place<T>::place;
-template <typename T> type_id get_type_id() { return &type_id_place<T>::place; }
+typedef const char* type_id;
+template <typename T> type_id get_type_id() { return typeid(T).name(); }
+
+class demangled_name : noncopyable {
+#ifdef __GNUC__
+  char* name_;
+ public:
+  explicit demangled_name(type_id id) {
+    int s;
+    name_ = abi::__cxa_demangle(id, 0, 0, &s);
+  }
+  ~demangled_name() { free(name_); }
+  operator const char*() const { return name_; }
+#else
+  const char* name_;
+ public:
+  explicit demangled_name(type_id id) : name_(id) {}
+  operator const char*() const { return name_; }
+#endif
+};
 
 template <typename Mutex> class lock_guard : noncopyable {
   Mutex& mutex_;
@@ -96,8 +116,20 @@ enum log_level {
   INFO = 0,
   WARN,
   ERROR,
-  FATAL
+  FATAL,
+  CHECK
 };
+
+inline const char* log_level_name(log_level level) {
+  switch (level) {
+    case INFO: return "INFO";
+    case WARN: return "WARN";
+    case ERROR: return "ERROR";
+    case FATAL: return "FATAL";
+    case CHECK: return "CHECK";
+    default: return 0;
+  }
+}
 
 class logger_t {
   std::ostream* stream_;
@@ -118,14 +150,15 @@ class logger_t {
   void write(log_level l, const std::string& message) {
     if (l < level_) return;
     lock_guard<mutex> lock(mutex_);
-    (*stream_) << message << std::endl;
+    (*stream_) << '[' << log_level_name(l) << "] " << message << std::endl;
   }
 
   template <typename Module>
   void verbose_write(int verbosity, const std::string& message) {
     if (module_verbosities_[get_type_id<Module>()] < verbosity) return;
     lock_guard<mutex> lock(mutex_);
-    (*stream_) << message << std::endl;
+    (*stream_) << '[' << demangled_name(get_type_id<Module>())
+               << ", " << verbosity << "] " << message << std::endl;
   }
 };
 static logger_t& logger = global<logger_t>::value;
@@ -174,7 +207,7 @@ template <typename Error> class exception_log {
   log_level level_;
 
  public:
-  explicit exception_log(log_level l = FATAL) : level_(l) {}
+  explicit exception_log(log_level l = CHECK) : level_(l) {}
   void write() const {
     logger.write(level_, oss_.str());
     throw Error();
@@ -236,8 +269,7 @@ template <> struct log_of_level<FATAL> {
 
 // ELOG_PREFIX can be defined by users
 #ifndef ELOG_PREFIX
-# define ELOG_PREFIX(type) \
-  "[" type "] " __FILE__ "(" ELOG_DETAIL_STRINGIZE(ELOG_DETAIL_LINE) "): "
+# define ELOG_PREFIX __FILE__ "(" ELOG_DETAIL_STRINGIZE(ELOG_DETAIL_LINE) "): "
 #endif
 
 // LOG is overloaded
@@ -245,17 +277,14 @@ template <> struct log_of_level<FATAL> {
 #define ELOG_DETAIL_ELOG_0() ELOG_DETAIL_ELOG_1(INFO)
 #define ELOG_DETAIL_ELOG_1(level) \
   ::LOG::log_write_trigger() & \
-  (::LOG::log_of_level< ::LOG::level>:: \
-   type(::LOG::level)) \
-  << ELOG_PREFIX(#level)
+  (::LOG::log_of_level< ::LOG::level>::type(::LOG::level)) << ELOG_PREFIX
 #define ELOG_DETAIL_ELOG_2(module, verbosity) \
   ::LOG::log_write_trigger() & \
-  (::LOG::verbose_log<module>(verbosity)) \
-  << ELOG_PREFIX(#module "(" #verbosity ")")
+  (::LOG::verbose_log<module>(verbosity)) << ELOG_PREFIX
 
 #define CHECK(cond) \
   (cond) ? (void)0 : ::LOG::log_write_trigger() & \
-  (::LOG::exception_log< ::LOG::check_error>()) << ELOG_PREFIX("CHECK")
+  (::LOG::exception_log< ::LOG::check_error>()) << ELOG_PREFIX
 
 #ifdef NDEBUG
 # define ELOG_DETAIL_NULL_STREAM \
