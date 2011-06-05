@@ -178,9 +178,7 @@ inline scoped_benchmark_case::~scoped_benchmark_case() {
   if (::LOG::scoped_benchmark BENCHMARK = \
       ::LOG::scoped_benchmark(title, level)); else
 
-#define BENCHMARK_CASE(...) \
-  ELOG_DETAIL_OVERLOAD(ELOG_DETAIL_BENCHMARK_CASE_, __VA_ARGS__)
-#define ELOG_DETAIL_BENCHMARK_CASE_2(benchmark, title) \
+#define BENCHMARK_CASE(benchmark, title) \
   if (::LOG::scoped_benchmark_case BENCHMARK_CASE = \
       benchmark.begin_case(title)); else
 
