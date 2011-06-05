@@ -141,6 +141,7 @@ class logger_t {
   logger_t() : stream_(&std::cerr), level_(INFO) {}
 
   void level(log_level l) { level_ = l; }
+  log_level level() const { return level_; }
   void stream(std::ostream& s) { stream_ = &s; }
 
   template <typename Module> void verbosity(int verbosity) {
