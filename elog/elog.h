@@ -147,6 +147,9 @@ class logger_t {
   template <typename Module> void verbosity(int verbosity) {
     module_verbosities_[get_type_id<Module>()] = verbosity;
   }
+  template <typename Module> int verbosity() const {
+    return module_verbosities_[get_type_id<Module>()];
+  }
 
   void write(log_level l, const std::string& message) {
     if (l < level_) return;
