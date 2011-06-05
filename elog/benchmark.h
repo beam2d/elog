@@ -143,9 +143,9 @@ class benchmark {
   explicit benchmark(const std::string& title) : title_(title) {}
 
   scoped_benchmark_case begin_case(const std::string& title) {
-    scoped_benchmark_case sc(titles_.size(), *this);
+    const std::size_t size = titles_.size();
     titles_.push_back(title);
-    return sc;
+    return scoped_benchmark_case(size, *this);
   }
 
   void put_chart(std::ostream& os = std::cerr) {
