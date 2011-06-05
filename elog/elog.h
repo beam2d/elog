@@ -148,7 +148,13 @@ class logger_t {
     module_verbosities_[get_type_id<Module>()] = verbosity;
   }
   template <typename Module> int verbosity() const {
-    return module_verbosities_[get_type_id<Module>()];
+    return verbosity(get_type_id<Module>());
+  }
+  int verbosity(type_id id) const {
+    std::tr1::unordered_map<type_id, int>::const_iterator it =
+        module_verbosities_.find(id);
+    if (it == module_verbosities_.end()) return 0;
+    return it->second;
   }
 
   void write(log_level l, const std::string& message) {
