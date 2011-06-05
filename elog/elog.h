@@ -165,10 +165,14 @@ class logger_t {
 
   template <typename Module>
   void verbose_write(int verbosity, const std::string& message) {
-    if (module_verbosities_[get_type_id<Module>()] < verbosity) return;
+    verbose_write(get_type_id<Module>(), verbosity, message);
+  }
+
+  void verbose_write(type_id id, int verbosity, const std::string& message) {
+    if (module_verbosities_[id] < verbosity) return;
     lock_guard<mutex> lock(mutex_);
-    (*stream_) << '[' << demangled_name(get_type_id<Module>())
-               << ", " << verbosity << "] " << message << std::endl;
+    (*stream_) << '[' << demangled_name(id) << ", " << verbosity << "] "
+               << message << std::endl;
   }
 };
 static logger_t& logger = global<logger_t>::value;
