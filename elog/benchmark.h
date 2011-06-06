@@ -29,7 +29,7 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <ostream>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -114,7 +114,6 @@ class benchmark {
   int precision_;
 
   static int pos_decimal_point(double x) {
-    DCHECK(x >= 0);
     int pos = 1;
     while (x >= 10) {
       x /= 10;
@@ -123,9 +122,8 @@ class benchmark {
     return pos;
   }
 
-  void end_case(std::size_t index, double time_) {
-    DCHECK(index < chart_.size());
-    chart_[index].second = time_;
+  void end_case(std::size_t index, double time) {
+    chart_[index].second = time;
   }
 
  public:
