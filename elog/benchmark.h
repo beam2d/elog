@@ -27,17 +27,17 @@
 
 // benchmark utility on eLog
 
+#include <algorithm>
 #include <iomanip>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 #ifdef _MSC_VER
-# include <functional>
 # pragma comment(lib, "winmm.lib")
 # include <mmsystem.h>
 # include <windows.h>
 #else  // _MSC_VER
-# include <tr1/functional>
 # include <sys/time.h>
 #endif  // _MSC_VER
 #include "elog.h"
@@ -94,27 +94,6 @@ class scoped_benchmark : public safe_false {
   timer get_timer() const { return timer_; }
 };
 
-class scoped_verbose_benchmark : public safe_false {
-  timer timer_;
-  std::string title_;
-  type_id id_;
-  int verbosity_;
-
- public:
-  template <typename Module>
-  explicit scoped_verbose_benchmark(const std::string& title, int verbosity)
-      : title_(title), id_(get_type_id<Module>), verbosity_(verbosity) {}
-
-  ~scoped_verbose_benchmark() {
-    if (logger.verbosity(id_) < verbosity_) return;
-    std::ostringstream message;
-    message << title_ << ": " << timer_ << " sec";
-    logger.verbose_write(id_, verbosity_, message.str());
-  }
-
-  timer get_timer() const { return timer_; }
-};
-
 class benchmark;
 
 class scoped_benchmark_case : public safe_false {
@@ -131,36 +110,63 @@ class benchmark {
   friend class scoped_benchmark_case;
 
   std::string title_;
-  std::vector<std::string> titles_;
-  std::vector<double> times_;
+  std::vector<std::pair<std::string, double> > chart_;
+  int precision_;
+
+  static int pos_decimal_point(double x) {
+    DCHECK(x >= 0);
+    int pos = 1;
+    while (x >= 10) {
+      x /= 10;
+      ++pos;
+    }
+    return pos;
+  }
 
   void end_case(std::size_t index, double time_) {
-    if (times_.size() <= index) times_.resize(index + 1);
-    times_[index] = time_;
+    DCHECK(index < chart_.size());
+    chart_[index].second = time_;
   }
 
  public:
-  explicit benchmark(const std::string& title) : title_(title) {}
+  explicit benchmark(const std::string& title)
+      : title_(title), precision_(5) {}
 
-  scoped_benchmark_case begin_case(const std::string& title) {
-    const std::size_t size = titles_.size();
-    titles_.push_back(title);
-    return scoped_benchmark_case(size, *this);
+  const std::string& title() const { return title_; }
+  const std::vector<std::pair<std::string, double> >& chart() const {
+    return chart_;
   }
 
-  void put_chart(std::ostream& os = std::cerr) {
+  scoped_benchmark_case begin_case(const std::string& title) {
+    const std::size_t index = chart_.size();
+    chart_.push_back(std::make_pair(title, NAN));
+    return scoped_benchmark_case(index, *this);
+  }
+
+  void precision(int prec) { precision_ = prec; }
+
+  void put_chart(std::ostream& os = std::cerr) const {
+    static const char TIMESEC[] = "time (sec)";
     std::size_t len = title_.size();
-    for (std::size_t i = 0; i < titles_.size(); ++i) {
-      if (len < titles_[i].size()) len = titles_[i].size();
+    int max_dec = 1;
+    for (std::size_t i = 0; i < chart_.size(); ++i) {
+      len = std::max(len, chart_[i].first.size());
+      max_dec = std::max(max_dec, pos_decimal_point(chart_[i].second));
     }
-    os << std::left;
-    os << std::setw(len) << title_ << " | time (sec)" << std::endl;
-    os << std::setw(len) << std::setfill('-') << ""
-       << "-+-" << std::setw(15) << std::setfill('-') << "" << std::endl;
-    os << std::setfill(' ');
-    for (std::size_t i = 0; i < titles_.size(); ++i) {
-      os << std::setw(len) << titles_[i] << " | " << times_[i] << std::endl;
+    const int time_width = max_dec + precision_ + 1;
+    const int sep_right_width =
+        std::max(time_width, static_cast<int>(sizeof(TIMESEC)) - 1);
+    os << std::left
+       << std::setw(len) << title_ << " | " << TIMESEC << '\n';
+    os << std::setw(len) << std::setfill('-') << "" << "-+-"
+       << std::setw(sep_right_width) << std::setfill('-') << "" << '\n';
+    os << std::setfill(' ') << std::fixed << std::setprecision(precision_);
+    for (std::size_t i = 0; i < chart_.size(); ++i) {
+      os << std::left << std::setw(len) << chart_[i].first << " | "
+         << std::right << std::setw(time_width)
+         << chart_[i].second << '\n';
     }
+    os << std::flush;
   }
 };
 
@@ -173,19 +179,8 @@ inline scoped_benchmark_case::~scoped_benchmark_case() {
 #define BENCHMARK(...) \
   ELOG_DETAIL_OVERLOAD(ELOG_DETAIL_BENCHMARK_, __VA_ARGS__)
 #define ELOG_DETAIL_BENCHMARK_1(title) \
-  ELOG_DETAIL_BENCHMARK_2(title, ::LOG::INFO)
-#define ELOG_DETAIL_BENCHMARK_2(title, level) \
   if (::LOG::scoped_benchmark BENCHMARK = \
-      ::LOG::scoped_benchmark(title, level)); else
-
-#define BENCHMARK_CASE(benchmark, title) \
-  if (::LOG::scoped_benchmark_case BENCHMARK_CASE = \
-      benchmark.begin_case(title)); else
-
-#ifdef NDEBUG
-# define DBENCHMARK(...) if (0); else
-# define DBENCHMARK_CASE(...) if (0); else
-#else
-# define DBENCHMARK BENCHMARK
-# define DBENCHMARK_CASE DBENCHMARK_CASE
-#endif
+      ::LOG::scoped_benchmark(title, ::LOG::INFO)); else
+#define ELOG_DETAIL_BENCHMARK_2(bench, title) \
+  if (::LOG::scoped_benchmark_case BENCHMARK = \
+      bench.begin_case(title)); else
