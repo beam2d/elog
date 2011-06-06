@@ -103,12 +103,11 @@ class scoped_benchmark_case : public safe_false {
  public:
   scoped_benchmark_case(std::size_t index, benchmark& bench)
       : index_(index), benchmark_(bench) {}
-  ~scoped_benchmark_case();
+  ~scoped_benchmark_case() { end(); }
+  void end() const;
 };
 
 class benchmark {
-  friend class scoped_benchmark_case;
-
   std::string title_;
   std::vector<std::pair<std::string, double> > chart_;
   int precision_;
@@ -122,10 +121,6 @@ class benchmark {
     return pos;
   }
 
-  void end_case(std::size_t index, double time) {
-    chart_[index].second = time;
-  }
-
  public:
   explicit benchmark(const std::string& title)
       : title_(title), precision_(5) {}
@@ -137,8 +132,12 @@ class benchmark {
 
   scoped_benchmark_case begin_case(const std::string& title) {
     const std::size_t index = chart_.size();
-    chart_.push_back(std::make_pair(title, NAN));
+    chart_.push_back(std::make_pair(title, -1.0));
     return scoped_benchmark_case(index, *this);
+  }
+
+  void end_case(std::size_t index, double time) {
+    if (chart_[index].second < 0) chart_[index].second = time;
   }
 
   void precision(int prec) { precision_ = prec; }
@@ -168,7 +167,7 @@ class benchmark {
   }
 };
 
-inline scoped_benchmark_case::~scoped_benchmark_case() {
+inline void scoped_benchmark_case::end() const {
   benchmark_.end_case(index_, timer_);
 }
 
