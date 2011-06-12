@@ -4,5 +4,8 @@ def build(bld):
   bld.install_files('${PREFIX}/include/elog', bld.path.ant_glob('*.h'))
 
   bld(features = 'cxx cprogram gtest',
+      source = 'thread_test.cc',
+      target = 'thread_test')
+  bld(features = 'cxx cprogram gtest',
       source = 'type_id_test.cc',
       target = 'type_id_test')
