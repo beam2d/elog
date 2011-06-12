@@ -6,10 +6,7 @@
 
 namespace LOG {
 
-template <typename T>
-class Type {
-  // nothing
-};
+template <typename T> class Type {};
 
 class TypeId {
  public:
@@ -34,7 +31,7 @@ inline bool operator==(const TypeId& lhs, const TypeId& rhs) {
 }
 
 inline bool operator!=(const TypeId& lhs, const TypeId& rhs) {
-  return lhs.typeid_name_ == rhs.typeid_name_;
+  return !(lhs == rhs);
 }
 
 }  // namespace LOG
