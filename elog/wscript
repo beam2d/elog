@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+def build(bld):
+  bld.install_files('${PREFIX}/include/elog', bld.path.ant_glob('*.h'))
+
+  bld(features = 'cxx cprogram gtest',
+      source = 'type_id_test.cc',
+      target = 'type_id_test')
