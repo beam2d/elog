@@ -1,6 +1,6 @@
 #include <typeinfo>
 #include <gtest/gtest.h>
-#include "type_id.h"
+#include "type_info.h"
 
 namespace LOG {
 

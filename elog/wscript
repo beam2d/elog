@@ -10,5 +10,5 @@ def build(bld):
       source = 'mutex_test.cc',
       target = 'mutex_test')
   bld(features = 'cxx cprogram gtest',
-      source = 'type_id_test.cc',
-      target = 'type_id_test')
+      source = 'type_info_test.cc',
+      target = 'type_info_test')
