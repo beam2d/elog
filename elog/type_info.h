@@ -8,6 +8,10 @@ namespace LOG {
 
 template <typename T> class Type {};
 
+// Type name of T.
+// For each type T, the value of GlobalTypeName<T>::name as a pointer is
+// unique for all compilation units, even if addresses of typeid(T) are
+// different.
 template <typename T>
 struct GlobalTypeName {
   static const char* name;
