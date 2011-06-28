@@ -1,15 +1,13 @@
 #ifndef ELOG_UTIL_H_
 #define ELOG_UTIL_H_
 
-#include <functional>
-
 namespace LOG {
 
 enum AvoidODR {
   AVOID_ODR
 };
 
-struct Call : std::unary_function<void, void> {
+struct Call {
   template <typename Function>
   void operator()(Function function) const {
     function();
