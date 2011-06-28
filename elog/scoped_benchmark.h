@@ -4,6 +4,7 @@
 #include <string>
 #include "benchmark_suite.h"
 #include "elog.h"
+#include "safe_bool.h"
 #include "timer.h"
 
 namespace LOG {
