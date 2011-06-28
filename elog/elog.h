@@ -27,6 +27,7 @@ struct VoidEmitter {
 
 #ifdef _MSC_VER
 
+# define ELOG_I_FILE __FILE__
 # define ELOG_I_LINE __COUNTER__
 
 # define ELOG_I_CAT(x, y) ELOG_I_CAT_I ELOG_I_EXPAND((x, y))
@@ -39,6 +40,7 @@ struct VoidEmitter {
 
 #else  // ifndef _MSC_VER
 
+# define ELOG_I_FILE __FILE__
 # define ELOG_I_LINE __LINE__
 
 # define ELOG_I_CAT(x, y) ELOG_I_CAT_I(x, y)
@@ -70,7 +72,8 @@ struct VoidEmitter {
 
 #define ELOG_I_LOG_0() ELOG_I_LOG_1(INFO)
 #define ELOG_I_LOG_1(level) \
-  ::LOG::LogEmitTrigger() & ::LOG::GeneralLog(::LOG::level)
+  ::LOG::LogEmitTrigger() & \
+  ::LOG::GeneralLog(::LOG::level, ELOG_I_FILE, ELOG_I_LINE).GetReference()
 
 #ifdef NDEBUG
 # define ELOG_I_NULL_STREAM \

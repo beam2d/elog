@@ -13,10 +13,8 @@ namespace LOG {
 template <typename T> class Singleton;
 
 template <AvoidODR>
-class SingletonFinalizerTemplate {
- private:
-  template <typename T> friend class Singleton;
-
+class SingletonFinalizerAvoidODR {
+ public:
   typedef void (* Finalizer)();
 
   static void RegisterFinalizer(Finalizer finalizer) {
@@ -28,6 +26,7 @@ class SingletonFinalizerTemplate {
     finalizers_.push_back(finalizer);
   }
 
+ private:
   static void Finalize() {
     Unregister();
 
@@ -54,16 +53,16 @@ class SingletonFinalizerTemplate {
 };
 
 template <AvoidODR N>
-std::vector<typename SingletonFinalizerTemplate<N>::Finalizer>
-SingletonFinalizerTemplate<N>::finalizers_;
+std::vector<typename SingletonFinalizerAvoidODR<N>::Finalizer>
+SingletonFinalizerAvoidODR<N>::finalizers_;
 
 template <AvoidODR N>
-Mutex SingletonFinalizerTemplate<N>::mutex_;
+Mutex SingletonFinalizerAvoidODR<N>::mutex_;
 
 template <AvoidODR N>
-bool SingletonFinalizerTemplate<N>::registered_;
+bool SingletonFinalizerAvoidODR<N>::registered_;
 
-typedef SingletonFinalizerTemplate<AVOID_ODR> SingletonFinalizer;
+typedef SingletonFinalizerAvoidODR<AVOID_ODR> SingletonFinalizer;
 
 template <typename T>
 class Singleton : Noncopyable {
@@ -89,6 +88,7 @@ class Singleton : Noncopyable {
   struct Init {
     void operator()() const {
       SingletonFinalizer::RegisterFinalizer(Finalize);
+      instance_ = new T;
     }
   };
 

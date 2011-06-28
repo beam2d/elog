@@ -24,13 +24,6 @@ class PseudoOutputStream {
 
 }  // anonymous namespace
 
-TEST(LoggerTest, LogLevelNames) {
-  EXPECT_STREQ(log_level_names[INFO], "INFO");
-  EXPECT_STREQ(log_level_names[WARN], "WARN");
-  EXPECT_STREQ(log_level_names[ERROR], "ERROR");
-  EXPECT_STREQ(log_level_names[FATAL], "FATAL");
-}
-
 TEST(LoggerTest, OutputLogLevelName) {
   PseudoOutputStream stream;
   OutputLogLevelName(INFO, stream);

@@ -18,3 +18,6 @@ def build(bld):
   bld(features = 'cxx cprogram gtest',
       source = 'type_info_test.cc',
       target = 'type_info_test')
+  bld(features = 'cxx cprogram gtest',
+      source = 'elog_test.cc',
+      target = 'elog_test')

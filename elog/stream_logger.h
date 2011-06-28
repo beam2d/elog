@@ -10,7 +10,7 @@ namespace LOG {
 class StreamLogger : public Logger {
  public:
   explicit StreamLogger(std::ostream& stream = std::clog)
-      : stream_(&stream),
+      : stream_(stream),
         level_(INFO) {
   }
 
@@ -18,19 +18,33 @@ class StreamLogger : public Logger {
     level_ = level;
   }
 
-  virtual void PushMessage(LogLevel level, const std::string& message) {
+  virtual void PushMessage(LogLevel level,
+                           const char* source_file_name,
+                           int line_number,
+                           const std::string& message) {
     if (!IsLogLevelSevereEnough(level, level_)) return;
-    PushMessageWithoutCheck(level, message);
+    PushMessageWithoutCheck(level, source_file_name, line_number, message);
+    ThrowOnFatalLog(level);
   }
 
  private:
-  void PushMessageWithoutCheck(LogLevel level, const std::string& message) {
+  void PushMessageWithoutCheck(LogLevel level,
+                               const char* source_file_name,
+                               int line_number,
+                               const std::string& message) {
     MutexLock lock(mutex_);
-    OutputLogLevelName(level, *stream_);
-    (*stream_) << message << std::endl;
+    OutputLogLevelName(level, stream_);
+    OutputFileLine(source_file_name, line_number, stream_);
+    stream_ << message << std::endl;
   }
 
-  std::ostream* stream_;
+  void ThrowOnFatalLog(LogLevel level) const {
+    if (level == FATAL) {
+      throw FatalLogError();
+    }
+  }
+
+  std::ostream& stream_;
   Mutex mutex_;
   LogLevel level_;
 };

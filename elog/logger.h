@@ -1,6 +1,7 @@
 #ifndef ELOG_LOGGER_H_
 #define ELOG_LOGGER_H_
 
+#include <exception>
 #include <string>
 #include "type_info.h"
 #include "util.h"
@@ -19,31 +20,42 @@ inline bool IsLogLevelSevereEnough(LogLevel log_level, LogLevel logger_level) {
 }
 
 template <AvoidODR>
-struct LogLevelNames {
+struct LogLevelNamesTemplate {
   static const char* names[4];
 };
 
 template <AvoidODR N>
-const char* LogLevelNames<N>::names[4] = {
+const char* LogLevelNamesTemplate<N>::names[4] = {
   "INFO",
   "WARN",
   "ERROR",
   "FATAL"
 };
 
-static const char** log_level_names = LogLevelNames<AVOID_ODR>::names;
+typedef LogLevelNamesTemplate<AVOID_ODR> LogLevelNames;
 
 template <typename OutputStream>
 inline void OutputLogLevelName(LogLevel level, OutputStream& stream) {
-  const char* log_level_name = log_level_names[level];
+  const char* log_level_name = LogLevelNames::names[level];
   stream << "[" << log_level_name << "] ";
 }
+
+template <typename OutputStream>
+inline void OutputFileLine(const char* source_file_name,
+                           int line_number,
+                           OutputStream& stream) {
+  stream << source_file_name << '(' << line_number << "): ";
+}
+
+struct FatalLogError : virtual std::exception {};
 
 class Logger {
  public:
   virtual ~Logger() {}
 
   virtual void PushMessage(LogLevel level,
+                           const char* source_file_name,
+                           int line_number,
                            const std::string& message) = 0;
 };
 

@@ -8,24 +8,13 @@ namespace LOG {
 
 namespace {
 
-/*
-ThreadA       ThreadB
-   |             |
-Lock mutex1   Lock mutex2
-flag on       Wait while !flag
-push 0        Lock mutex1
-Unlock mutex1 Wait...
-Lock mutex2   push 1
-Wait...       Unlock mutex1
-   |          push 2
-   |          Unlock mutex2
-push 3           |
-Unlock mutex2    |
- */
-
 class MutexTester {
  public:
-  MutexTester() : start_flag_(false) {
+  MutexTester()
+      : start_flag_A_(false),
+        start_flag_B_(false),
+        end_flag_A_(false),
+        end_flag_B_(false) {
   }
 
   void Run() {
@@ -39,28 +28,38 @@ class MutexTester {
 
     thread_b.Run();
     thread_a.Run();
+
+    while (!end_flag_A_ || !end_flag_B_) {
+      continue;
+    }
   }
 
   void ThreadA() {
     {
       MutexLock lock(mutex1_);
-      start_flag_ = true;
+      start_flag_A_ = true;
+      while (!start_flag_B_) continue;
       items_.push_back(0);
     }
     {
       MutexLock lock(mutex2_);
       items_.push_back(3);
     }
+    end_flag_A_ = true;
   }
 
   void ThreadB() {
-    MutexLock lock2(mutex2_);
-    while (!start_flag_) continue;
     {
-      MutexLock lock1(mutex1_);
-      items_.push_back(1);
+      MutexLock lock2(mutex2_);
+      start_flag_B_ = true;
+      while (!start_flag_A_) continue;
+      {
+        MutexLock lock1(mutex1_);
+        items_.push_back(1);
+      }
+      items_.push_back(2);
     }
-    items_.push_back(2);
+    end_flag_B_ = true;
   }
 
   void Verify() const {
@@ -73,7 +72,10 @@ class MutexTester {
   std::vector<int> items_;
   Mutex mutex1_;
   Mutex mutex2_;
-  volatile bool start_flag_;
+  volatile bool start_flag_A_;
+  volatile bool start_flag_B_;
+  volatile bool end_flag_A_;
+  volatile bool end_flag_B_;
 };
 
 }  // anonymous namespace

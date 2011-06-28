@@ -21,7 +21,7 @@ class MutexLock {
   }
 
  private:
-  Mutex mutex_;
+  Mutex& mutex_;
 };
 
 }  // namespace LOG
