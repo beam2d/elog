@@ -8,7 +8,7 @@
 
 namespace LOG {
 
-class ScopedThreadHandle : NonCopyable {
+class ScopedThreadHandle : Noncopyable {
  public:
   explicit ScopedThreadHandle(HANDLE handle = NULL)
       : handle_(handle) {
@@ -33,7 +33,7 @@ class ScopedThreadHandle : NonCopyable {
   HANDLE handle_;
 };
 
-class Thread : NonCopyable {
+class Thread : Noncopyable {
  public:
   Thread() {
   }

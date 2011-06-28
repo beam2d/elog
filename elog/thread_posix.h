@@ -7,7 +7,7 @@
 
 namespace LOG {
 
-class Thread : NonCopyable {
+class Thread : Noncopyable {
  public:
   Thread() : is_running_(false) {
   }

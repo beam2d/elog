@@ -66,7 +66,7 @@ bool SingletonFinalizerTemplate<N>::registered_;
 typedef SingletonFinalizerTemplate<AVOID_ODR> SingletonFinalizer;
 
 template <typename T>
-class Singleton : NonCopyable {
+class Singleton : Noncopyable {
  public:
   static T& Get() {
     CallOnce(initialization_flag_, Init());

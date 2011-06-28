@@ -14,14 +14,20 @@ struct Call {
   }
 };
 
-class NonCopyable {
+struct EmptyFunction {
+  template <typename T>
+  void operator()(T) const {
+  }
+};
+
+class Noncopyable {
  protected:
-  NonCopyable() {}
-  ~NonCopyable() {}
+  Noncopyable() {}
+  ~Noncopyable() {}
 
  private:
-  NonCopyable(const NonCopyable&);  // no implementation
-  NonCopyable& operator=(const NonCopyable&);  // no implementation
+  Noncopyable(const Noncopyable&);  // no implementation
+  Noncopyable& operator=(const Noncopyable&);  // no implementation
 };
 
 }  // namespace LOG
