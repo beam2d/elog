@@ -2,7 +2,6 @@
 #define ELOG_LOGGER_FACTORY_H_
 
 #include "atomic.h"
-#include "scoped_ptr.h"
 #include "singleton.h"
 #include "stream_logger.h"
 #include "util.h"
