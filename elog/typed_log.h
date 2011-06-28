@@ -30,6 +30,18 @@ class TypedLog {
     return *this;
   }
 
+  // Output 1-byte value as an integer rather than a character.
+  TypedLog& operator<<(signed char t) {
+    string_builder_ << static_cast<int>(t);
+    return *this;
+  }
+
+  // ditto
+  TypedLog& operator<<(unsigned char t) {
+    string_builder_ << static_cast<unsigned int>(t);
+    return *this;
+  }
+
   TypedLog& GetReference() {
     return *this;
   }

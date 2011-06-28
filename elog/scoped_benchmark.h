@@ -9,9 +9,7 @@
 
 namespace LOG {
 
-class ScopedBenchmark
-    : Noncopyable,
-      public SafeBool<ScopedBenchmark> {
+class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
  public:
   explicit ScopedBenchmark(const std::string& title,
                            BenchmarkSuite* suite = NULL,
@@ -22,6 +20,7 @@ class ScopedBenchmark
         suite_(suite),
         level_(level),
         done_(false) {
+    logger_.PushRawMessage(level, title + "...");
   }
 
   ~ScopedBenchmark() {

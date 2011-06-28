@@ -1,6 +1,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#ifdef __GNUC__
+# include <tr1/cstdint>
+#else
+# include <cstdint>
+#endif
 #include <gtest/gtest.h>
 #include "elog.h"
 
@@ -178,6 +183,24 @@ TEST_F(LOGTest, MessageOfAnotherType) {
   SetVerbosity<SomeModule>(1);
   LOG(AnotherModule, 1) << kMessage;
   VerifyEmpty();
+}
+
+
+TEST_F(LOGTest, PrintSignedChar) {
+  const signed char value = 65;
+  LOG() << value;
+  VerifyMessage("65");
+}
+
+TEST_F(LOGTest, PrintUnsignedChar) {
+  const unsigned char value = 65;
+  LOG() << value;
+  VerifyMessage("65");
+}
+
+TEST_F(LOGTest, PrintChar) {
+  LOG() << 'A';
+  VerifyMessage("A");
 }
 
 }  // namespace LOG

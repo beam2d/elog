@@ -72,6 +72,8 @@ struct VoidEmitter {
 #define LOG(...) ELOG_I_OVERLOAD(ELOG_I_LOG_, __VA_ARGS__)
 
 #define ELOG_I_LOG_0() ELOG_I_LOG_1(INFO)
+
+// '<' and '::' must be separated by white space, because <:: is a trigram
 #define ELOG_I_LOG_1(level) \
   ::LOG::LogEmitTrigger() & \
   ::LOG::GeneralLog< ::LOG::level>(ELOG_I_FILE, ELOG_I_LINE).GetReference()
@@ -81,7 +83,7 @@ struct VoidEmitter {
   ::LOG::TypedLog(::LOG::TypeInfo(::LOG::Type<type>()), (verbosity), \
                   ELOG_I_FILE, ELOG_I_LINE).GetReference()
 
-
+// ditto
 #define CHECK(cond) \
   (cond) ? (void)0 : ::LOG::LogEmitTrigger() & \
   ::LOG::GeneralLog< ::LOG::CHECK>(ELOG_I_FILE, ELOG_I_LINE).GetReference()

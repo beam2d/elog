@@ -25,6 +25,18 @@ class GeneralLog {
     return *this;
   }
 
+  // Output 1-byte value as an integer rather than character.
+  GeneralLog& operator<<(signed char t) {
+    string_builder_ << static_cast<int>(t);
+    return *this;
+  }
+
+  // ditto
+  GeneralLog& operator<<(unsigned char t) {
+    string_builder_ << static_cast<unsigned int>(t);
+    return *this;
+  }
+
   GeneralLog& GetReference() {
     return *this;
   }
