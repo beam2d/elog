@@ -1,3 +1,6 @@
+// Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
+// This source code is distributed under MIT License in LICENSE file.
+
 #include <tr1/functional>
 #include <gtest/gtest.h>
 #include "thread.h"

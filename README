@@ -1,90 +1,169 @@
 Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
 
-eLog is a tiny logging library for C++.
+eLog is a header only logging library for C++.
+
+This library is distributed under MIT License, which is available as the file
+of name 'LICENSE'.
 
 ==============================================================================
-short description
+features
 
-- Light weight logging utility for C++.
-- Consists of single header.
-- Syntax like google-glog with very limited features
-- Multi-thread ready
-- Supports g++ 4.2.1+ (using GNU extension) and VC++ 2010
-- Verbose logging with different verbosity for each user-defined module
-- MIT License
+- Header only library.
+- Portable: it runs on both POSIX-like systems and Windows.
+- Syntax like google-glog. eLog has a simpler syntax and limited methods.
+- Multi-thread ready.
+- Supports g++ 4.2.1+ (using GNU extension) and VC++ 2010.
+- Typed and verbose logging with different verbosity for each type.
+- Simple benchmark that counts and logs the time duration of processing.
+
+
+==============================================================================
+install
+
+If you have python, type `[sudo] ./waf install'. It will install all headers to
+/usr/local/include/elog/. Just copying elog/*.h to /usr/local/include/elog/ is
+also ok.
 
 
 ==============================================================================
 usage
 
-eLog consists of only one header file 'elog.h'. If python is installed,
-`./waf install' installs elog.h into the standard include directory, e.g.
-/usr/local/include. Of course you can manually place it anywhere.
+You can start using eLog by including <elog/elog.h> or, if you want to use
+benchmark utilities, <elog/benchmark.h>.
 
-Basic logging syntax is similar to that of well known google-glog:
+------------------------------------------------------------------------------
+simple logging
 
-  LOG(INFO) << "some message or value like " << 100 << '.';
+Basic logging syntax is similar to that of the famous logging library, glog:
+
+  LOG(INFO) << "some message or value like " << 123;
 
 operator<< of LOG(...) accepts any value that ostream accepts. There are four
-levels of log: INFO, WARN, ERROR and FATAL. Especially INFO can be omitted:
+levels of log: INFO, WARN, ERROR and FATAL. Especially, INFO can be omitted:
 
   LOG() << "INFO level message";
 
-Messages of any level are emitted by default. It can be modified by:
+Logger emits any level message by default. You can restrict messages by
+setting level. If the default logger is the current global one, then eigher of
+below changes the level of logger.
 
-  LOG::logger.level(LOG::LOGLEVEL_ERROR);
+  LOG::Singleton<LOG::StreamLogger>::Get().set_level(LOG::ERROR);
+  of
+  LOG::SetDefaultLoggerLevel(LOG::ERROR);
 
-and then LOG(INFO) and LOG(WARN) will not output any messages.
+After this line is executed, messages of level INFO and WARN are ignored.
 
-LOG(FATAL) is special: it throws an exception of type LOG::fatal_log after
-outputing the messages. eLog does not have stack-trace feature like google-glog.
+NOTE: LOG becomes a namespace of eLog when used without trailing parentheses.
+LOG(...) is a variadic macro.
 
-eLog has module-wise verbose logging syntax:
+LOG(FATAL) is special; it throws an exception of type LOG::FatalLogError after
+outputing the message. eLog currently does not have stack-trace feature like
+google-glog.
 
-  LOG(some_type, 1) << "module log with verbosity 1";
+LOG(...) emits messages to std::clog by default. LOG::Logger is the interface
+of log emission, and global logger can be exchanged by LOG::SetLogger.
 
-The first argument, called 'module type', can be any type. Typically user
-define empty class representing a module and use it like:
+  std::ostream& my_stream = ...;
+  LOG::Logger* my_logger = new LOG::StreamLogger(my_stream);
+  LOG::SetLogger(*my_logger);
 
-  class keyinput;  // Definition is not required
+SetLogger gives a reference to *my_logger to the global logger holder, so you
+must keep my_logger alive while it is used as a global logger.
+
+------------------------------------------------------------------------------
+Typed and verbose logging
+
+eLog has another syntax: typed and verbose logging.
+
+  LOG(SomeType, 1) << "typed log with verbosity 1";
+
+The first argument, called 'message type', can be any type. Typically user-
+defined class is used.
+
+  class KeyInput {};  // Message type cannot be incomplete.
   ...
-  LOG(keyinput, 1) << "verbose log about key input module";
+  LOG(KeyInput, 1) << "verbose log about key input";
 
-Or another typical usage is setting it to the class of the function which
-includes the logging line:
+Another typical usage is set the message type to the class of the method in
+which the LOG(...) statement is written.
 
-  class some_class {
-    void method() {
-      LOG(some_class, 0) << "verbose log from some_class";
+  class Keyboard {
+    void Method() {
+      LOG(Keyboard, 0) << "verbose log from Keyboard";
     }
   };
 
-The second argument is verbosity of the message. LOG(type, N) outputs messages
-if N is not greater than module verbosity. Default verbosity of each module is
-0. You can modify verbosity of each module by writing:
+The second argument is verbosity of the message. LOG(type, N) emits the message
+if N is not greater than the verbosity of 'type' under the current global
+logger. Default verbosity of each type is 0. You can modify verbosity of each
+type. If default logger is the global one, then either of below changes the
+verbosity of SomeType.
 
-  LOG::logger.verbosity<module_type>(2);
+  LOG::Singleton<LOG::StreamLogger>::Get().SetTypeVerbosity(
+      LOG::TypeInfo(LOG::Type<SomeType>()), 2);
+  or
+  LOG::SetDefaultLoggerVerbosity<SomeType>(2);
 
-and then LOG(module_type, N) will output messages only if N <= 2.
+After this line is executed, LOG(SomeType, N) will emit messages only if N <= 2.
+
+------------------------------------------------------------------------------
+Assertion
 
 eLog also has assertion syntax:
 
   CHECK(!some_critical_condition) << "some_critical_condition occured";
 
-It outputs messages only if the operand is false, and after that throws an
-exception of type LOG::check_error.
+It emits messages only if the operand is false, and after that it throws an
+exception of type LOG::CheckError.
 
-eLog outputs log messages to std::cerr by default. You can change this output
-stream by:
+------------------------------------------------------------------------------
+Benchmark
 
-  std::ostream& os = ...;
-  LOG::logger.stream(os);
+Benchmark utilities are useful to measure and output the time to execute code
+fragment. For instance, unary BENCHMARK(...) is useful to quickly measure some
+code:
 
-All logging syntaxes are thread-safe, so output stream is not required to be
-thread-safe.
+  BENCHMARK(bench_heavy_method) {
+    SomeHeavyMethod1();
+    SomeHeavyMethod2();
+  }
 
-There are debug version of LOG and CHECK, named DLOG and DCHECK. They output
-nothing if NDEBUG is not defined.
+At the top of the clause, it outputs 'bench_heavy_method...' to the current
+global logger, executes inside of braces, and outputs total execution time in
+second.
 
-NOTE(g++): LOG(...) uses compiler extensions, so LOG(...) will produce
-compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).
+In case that you want to measure many code fragments, you can use
+LOG::BenchmarkSuite to bundle all results. You can outputs results to the
+current global logger by calling LogChart.
+
+  LOG::BenchmarkSuite suite("my experiments");
+
+  BENCHMARK(suite, first_exp) {
+    ...
+  }
+  ...
+  BENCHMARK(suite, second_exp) {
+    ...
+  }
+  ...
+  ...
+  BENCHMARK(suite, nth_exp) {
+    ...
+  }
+
+  suite.LogChart();  // outputs results
+
+It will emits chart of results.
+
+------------------------------------------------------------------------------
+Debug versions
+
+There are similar macro of LOG and CHECK, named DLOG and DCHECK. These are debug
+version macro. DLOG and DCHECK do nothing if NDEBUG is defined. Otherwise these
+are exactly same as LOG and CHECK, respectively.
+
+------------------------------------------------------------------------------
+Other note
+
+NOTE(g++): LOG(...) and BENCHMARK(...) uses compiler extensions, so they will
+produce compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).

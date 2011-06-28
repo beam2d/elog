@@ -1,3 +1,6 @@
+// Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
+// This source code is distributed under MIT License in LICENSE file.
+
 #ifndef ELOG_LOGGER_FACTORY_H_
 #define ELOG_LOGGER_FACTORY_H_
 
@@ -44,6 +47,17 @@ inline void SetLogger(Logger& logger) {
 
 inline void UseDefaultLogger() {
   Singleton<LoggerFactory>::Get().Reset();
+}
+
+
+inline void SetDefaultLoggerLevel(LogLevel level) {
+  Singleton<StreamLogger>::Get().set_level(level);
+}
+
+template <typename T>
+inline void SetDefaultLoggerVerbosity(int verbosity) {
+  Singleton<StreamLogger>::Get().SetTypeVerbosity(
+      TypeInfo(Type<T>()), verbosity);
 }
 
 }  // namespace LOG
