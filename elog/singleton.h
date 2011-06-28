@@ -96,9 +96,8 @@ class Singleton : Noncopyable {
     T* instance = instance_;
     instance_ = NULL;
 
-    // Checked delete. We cannot put it to a function, typically named
-    // CheckedDelete, because T::~T can be private, which is valid if
-    // Singleton<T> is a friend class of T.
+    // We cannot use CheckedDelete, because T::~T can be private and
+    // Singleton<T> can be a friend class of T.
     typedef char T_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(T_must_be_complete);
     delete instance;

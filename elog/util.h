@@ -30,6 +30,13 @@ class Noncopyable {
   Noncopyable& operator=(const Noncopyable&);  // no implementation
 };
 
+template <typename T>
+void CheckedDelete(T* p) {
+  typedef char T_must_be_complete[sizeof(T) ? 1 : -1];
+  (void) sizeof(T_must_be_complete);
+  delete p;
+}
+
 }  // namespace LOG
 
 #endif  // ELOG_UTIL_H_
