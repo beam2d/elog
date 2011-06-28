@@ -33,6 +33,11 @@ class StreamLogger : public Logger {
     verbosities_.clear();
   }
 
+  virtual void PushRawMessage(LogLevel level, const std::string& message) {
+    if (!IsLogLevelSevereEnough(level, level_)) return;
+    stream_ << message << std::endl;
+  }
+
   virtual void PushMessage(LogLevel level,
                            const char* source_file_name,
                            int line_number,

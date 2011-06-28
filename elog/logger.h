@@ -68,6 +68,8 @@ class Logger {
 
   virtual ~Logger() {}
 
+  virtual void PushRawMessage(LogLevel level, const std::string& message) = 0;
+
   virtual void PushMessage(LogLevel level,
                            const char* source_file_name,
                            int line_number,
