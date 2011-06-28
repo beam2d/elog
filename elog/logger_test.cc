@@ -26,7 +26,7 @@ class PseudoOutputStream {
 
 TEST(LoggerTest, OutputLogLevelName) {
   PseudoOutputStream stream;
-  OutputLogLevelName(INFO, stream);
+  Logger::OutputLogLevelName(INFO, stream);
   EXPECT_EQ("[INFO] ", stream.GetBuffer());
 }
 

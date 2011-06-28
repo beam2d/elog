@@ -22,8 +22,12 @@ void VerifyPushMessage(LogLevel level) {
 
   if (level == FATAL) {
     EXPECT_THROW(
-        logger.PushMessage(level, kSourceFileName, kLineNumber, kMessage),
+        logger.PushFatalMessageAndThrow(kSourceFileName, kLineNumber, kMessage),
         FatalLogError);
+  } else if (level == CHECK) {
+    EXPECT_THROW(
+        logger.PushCheckMessageAndThrow(kSourceFileName, kLineNumber, kMessage),
+        CheckError);
   } else {
     logger.PushMessage(level, kSourceFileName, kLineNumber, kMessage);
   }
@@ -49,6 +53,10 @@ TEST(StreamLoggerTest, PushMessageERROR) {
 
 TEST(StreamLoggerTest, PushMessageFATAL) {
   VerifyPushMessage(FATAL);
+}
+
+TEST(StreamLoggerTest, PushMessageCHECK) {
+  VerifyPushMessage(CHECK);
 }
 
 // TODO(S.Tokui): Write multi-thread test.

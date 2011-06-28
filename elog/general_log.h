@@ -8,14 +8,13 @@
 
 namespace LOG {
 
+template <LogLevel LEVEL>
 class GeneralLog {
  public:
-  explicit GeneralLog(LogLevel log_level,
-                      const char* source_file_name,
-                      int line_number,
-                      Logger* logger = NULL)
+  GeneralLog(const char* source_file_name,
+             int line_number,
+             Logger* logger = NULL)
       : logger_(logger ? *logger : GetLogger()),
-        log_level_(log_level),
         source_file_name_(source_file_name),
         line_number_(line_number) {
   }
@@ -32,16 +31,27 @@ class GeneralLog {
 
   void PushMessage() const {
     const std::string& message = string_builder_.str();
-    logger_.PushMessage(log_level_, source_file_name_, line_number_, message);
+    logger_.PushMessage(LEVEL, source_file_name_, line_number_, message);
   }
 
  private:
   Logger& logger_;
   std::ostringstream string_builder_;
-  LogLevel log_level_;
   const char* source_file_name_;
   int line_number_;
 };
+
+template <>
+void GeneralLog<FATAL>::PushMessage() const {
+  const std::string& message = string_builder_.str();
+  logger_.PushFatalMessageAndThrow(source_file_name_, line_number_, message);
+}
+
+template <>
+void GeneralLog<CHECK>::PushMessage() const {
+  const std::string& message = string_builder_.str();
+  logger_.PushCheckMessageAndThrow(source_file_name_, line_number_, message);
+}
 
 }  // namespace LOG
 

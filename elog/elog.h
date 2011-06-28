@@ -2,6 +2,7 @@
 #define ELOG_ELOG_H_
 
 #include "general_log.h"
+#include "typed_log.h"
 
 namespace LOG {
 
@@ -73,14 +74,27 @@ struct VoidEmitter {
 #define ELOG_I_LOG_0() ELOG_I_LOG_1(INFO)
 #define ELOG_I_LOG_1(level) \
   ::LOG::LogEmitTrigger() & \
-  ::LOG::GeneralLog(::LOG::level, ELOG_I_FILE, ELOG_I_LINE).GetReference()
+  ::LOG::GeneralLog< ::LOG::level>(ELOG_I_FILE, ELOG_I_LINE).GetReference()
+
+#define ELOG_I_LOG_2(type, verbosity) \
+  ::LOG::LogEmitTrigger() & \
+  ::LOG::TypedLog(::LOG::TypeInfo(::LOG::Type<type>()), (verbosity), \
+                  ELOG_I_FILE, ELOG_I_LINE).GetReference()
+
+
+#define CHECK(cond) \
+  (cond) ? (void)0 : ::LOG::LogEmitTrigger() & \
+  ::LOG::GeneralLog< ::LOG::CHECK>(ELOG_I_FILE, ELOG_I_LINE).GetReference()
+
 
 #ifdef NDEBUG
 # define ELOG_I_NULL_STREAM \
   true ? (void)0 : ::LOG::VoidEmitter() & ::LOG::NullStream()
 # define DLOG(...) ELOG_I_NULL_STREAM
+# define DCHECK(...) ELOG_I_NULL_STREAM
 #else
 # define DLOG LOG
+# define DCHECK CHECK
 #endif
 
 #endif  // ELOG_ELOG_H_

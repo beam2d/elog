@@ -6,6 +6,15 @@
 
 namespace LOG {
 
+namespace {
+
+const char* kMessage = "message";
+
+class SomeModule {};
+class AnotherModule {};
+
+}  // anonymous namespace
+
 class LOGTest : public ::testing::Test {
  public:
   LOGTest()
@@ -20,6 +29,8 @@ class LOGTest : public ::testing::Test {
 
   virtual void TearDown() {
     UseDefaultLogger();
+    SetLevel(INFO);
+    logger_.ResetVerbosities();
   }
 
   void Reset() {
@@ -28,6 +39,16 @@ class LOGTest : public ::testing::Test {
 
   std::string GetMessage() const {
     return stream_.str();
+  }
+
+  void SetLevel(LogLevel level) {
+    logger_.set_level(level);
+  }
+
+  template <typename T>
+  void SetVerbosity(int verbosity) {
+    const TypeInfo type_info((Type<T>()));
+    logger_.SetTypeVerbosity(type_info, verbosity);
   }
 
   void VerifyLevel(LogLevel level) const {
@@ -41,40 +62,122 @@ class LOGTest : public ::testing::Test {
     EXPECT_NE(std::string::npos, message.find(must_have_me));
   }
 
+  template <typename T>
+  void VerifyType() const {
+    const TypeInfo type_info((Type<T>()));
+    const std::string type_name(type_info.GetTypeName().GetName());
+    VerifyMessage(type_name);
+  }
+
+  void VerifyEmpty() const {
+    const std::string message = GetMessage();
+    EXPECT_EQ("", message);
+  }
+
  private:
   std::ostringstream stream_;
   StreamLogger logger_;
 };
 
-TEST_F(LOGTest, LevelOfNullArguments) {
+TEST_F(LOGTest, LevelNULL) {
   LOG();
   VerifyLevel(INFO);
 }
 
-TEST_F(LOGTest, MessageOfNullArguments) {
-  static const char* kMessage = "message";
-  LOG() << kMessage;
-  VerifyMessage(kMessage);
-}
-
-TEST_F(LOGTest, INFOMessage) {
+TEST_F(LOGTest, LevelINFO) {
   LOG(INFO);
   VerifyLevel(INFO);
 }
 
-TEST_F(LOGTest, WARNMessage) {
+TEST_F(LOGTest, LevelWARN) {
   LOG(WARN);
   VerifyLevel(WARN);
 }
 
-TEST_F(LOGTest, ERRORMessage) {
+TEST_F(LOGTest, LevelERROR) {
   LOG(ERROR);
   VerifyLevel(ERROR);
 }
 
-TEST_F(LOGTest, FATALMessage) {
+TEST_F(LOGTest, LevelFATAL) {
   EXPECT_THROW(LOG(FATAL), FatalLogError);
   VerifyLevel(FATAL);
+}
+
+TEST_F(LOGTest, LevelCHECK) {
+  EXPECT_THROW(CHECK(false), CheckError);
+  VerifyLevel(CHECK);
+}
+
+TEST_F(LOGTest, MessageNULL) {
+  LOG() << kMessage;
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, MessageINFO) {
+  LOG(INFO) << kMessage;
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, MessageWARN) {
+  LOG(WARN) << kMessage;
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, MessageERROR) {
+  LOG(ERROR) << kMessage;
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, MessageFATAL) {
+  EXPECT_THROW(LOG(FATAL) << kMessage, FatalLogError);
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, MessageCHECK) {
+  EXPECT_THROW(CHECK(false) << kMessage, CheckError);
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, LevelNotHighEnough) {
+  SetLevel(WARN);
+  LOG(INFO) << kMessage;
+  VerifyEmpty();
+}
+
+TEST_F(LOGTest, LevelHighEnough) {
+  SetLevel(ERROR);
+  LOG(ERROR);
+  VerifyLevel(ERROR);
+}
+
+
+TEST_F(LOGTest, TypedMessageType) {
+  LOG(SomeModule, 0);
+  VerifyType<SomeModule>();
+}
+
+TEST_F(LOGTest, TypedMessageMessage) {
+  LOG(SomeModule, 0) << kMessage;
+  VerifyMessage(kMessage);
+}
+
+TEST_F(LOGTest, VerbosityNotLowEnough) {
+  SetVerbosity<SomeModule>(1);
+  LOG(SomeModule, 2) << kMessage;
+  VerifyEmpty();
+}
+
+TEST_F(LOGTest, VerbosityLowEnough) {
+  SetVerbosity<SomeModule>(1);
+  LOG(SomeModule, 1);
+  VerifyType<SomeModule>();
+}
+
+TEST_F(LOGTest, MessageOfAnotherType) {
+  SetVerbosity<SomeModule>(1);
+  LOG(AnotherModule, 1) << kMessage;
+  VerifyEmpty();
 }
 
 }  // namespace LOG

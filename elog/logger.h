@@ -12,51 +12,80 @@ enum LogLevel {
   INFO,
   WARN,
   ERROR,
-  FATAL
+  FATAL,
+  CHECK
 };
 
 inline bool IsLogLevelSevereEnough(LogLevel log_level, LogLevel logger_level) {
   return log_level >= logger_level;
 }
 
+inline bool IsVerboseEnough(int log_verbosity, int logger_verbosity) {
+  return log_verbosity > logger_verbosity;
+}
+
 template <AvoidODR>
 struct LogLevelNamesTemplate {
-  static const char* names[4];
+  static const char* names[5];
 };
 
 template <AvoidODR N>
-const char* LogLevelNamesTemplate<N>::names[4] = {
+const char* LogLevelNamesTemplate<N>::names[5] = {
   "INFO",
   "WARN",
   "ERROR",
-  "FATAL"
+  "FATAL",
+  "CHECK"
 };
 
 typedef LogLevelNamesTemplate<AVOID_ODR> LogLevelNames;
 
-template <typename OutputStream>
-inline void OutputLogLevelName(LogLevel level, OutputStream& stream) {
-  const char* log_level_name = LogLevelNames::names[level];
-  stream << "[" << log_level_name << "] ";
-}
-
-template <typename OutputStream>
-inline void OutputFileLine(const char* source_file_name,
-                           int line_number,
-                           OutputStream& stream) {
-  stream << source_file_name << '(' << line_number << "): ";
-}
-
 struct FatalLogError : virtual std::exception {};
+struct CheckError : virtual std::exception {};
 
 class Logger {
  public:
+  template <typename OutputStream>
+  static void OutputLogLevelName(LogLevel level, OutputStream& stream) {
+    const char* log_level_name = LogLevelNames::names[level];
+    stream << "[" << log_level_name << "] ";
+  }
+
+  template <typename OutputStream>
+  static void OutputTypedMessageHeader(TypeInfo type_info,
+                                       int verbosity,
+                                       OutputStream& stream) {
+    const Demangle demangle = type_info.GetTypeName();
+    stream << "[" << demangle.GetName() << "(" << verbosity << ")] ";
+  }
+
+  template <typename OutputStream>
+  static void OutputFileLine(const char* source_file_name,
+                             int line_number,
+                             OutputStream& stream) {
+    stream << source_file_name << "(" << line_number << "): ";
+  }
+
   virtual ~Logger() {}
 
   virtual void PushMessage(LogLevel level,
                            const char* source_file_name,
                            int line_number,
                            const std::string& message) = 0;
+
+  virtual void PushFatalMessageAndThrow(const char* source_file_name,
+                                        int line_number,
+                                        const std::string& message) = 0;
+
+  virtual void PushCheckMessageAndThrow(const char* source_file_name,
+                                        int line_number,
+                                        const std::string& message) = 0;
+
+  virtual void PushTypedMessage(TypeInfo type_info,
+                                int verbosity,
+                                const char* source_file_name,
+                                int line_number,
+                                const std::string& message) = 0;
 };
 
 }  // namespace LOG

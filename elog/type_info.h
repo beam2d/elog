@@ -2,6 +2,11 @@
 #define ELOG_TYPE_INFO_H_
 
 #include <typeinfo>
+#ifdef __GNUC__
+# include <tr1/functional>
+#else
+# include <functional>
+#endif
 #include "demangle.h"
 
 namespace LOG {
@@ -32,6 +37,8 @@ class TypeInfo {
   }
 
  private:
+  friend struct std::tr1::hash<TypeInfo>;
+
 #define ELOG_I_DEFINE_TYPEINFO_OPERATOR(op) \
   friend bool operator op(const TypeInfo& lhs, const TypeInfo& rhs) { \
     return lhs.global_type_name_ op rhs.global_type_name_; \
@@ -49,7 +56,20 @@ class TypeInfo {
   const char* global_type_name_;
 };
 
-
 }  // namespace LOG
+
+namespace std {
+namespace tr1 {
+
+template <>
+struct hash< ::LOG::TypeInfo>
+    : std::unary_function< ::LOG::TypeInfo, std::size_t> {
+  std::size_t operator()(::LOG::TypeInfo type_info) const {
+    return hash<const char*>()(type_info.global_type_name_);
+  }
+};
+
+}  // namespace std::tr1
+}  // namespace std
 
 #endif  // ELOG_TYPE_INFO_H_
