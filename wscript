@@ -13,8 +13,7 @@ def options(opt):
 def configure(cnf):
   cnf.load('compiler_cxx')
   cnf.load('unittestt')
-  # cnf.env.CXXFLAGS = ['-g', '-W', '-Wall', '-O2']
-  cnf.env.CXXFLAGS = ['-g', '-W', '-Wall', '-O0']
+  cnf.env.CXXFLAGS = ['-g', '-W', '-Wall', '-O2']
 
 def build(bld):
   bld.recurse('elog')
