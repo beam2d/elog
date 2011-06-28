@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "logger.h"
+#include "logger_factory.h"
 #include "mutex.h"
 
 namespace LOG {
@@ -34,6 +36,14 @@ class BenchmarkSuite {
   void AddCase(const std::string& case_name, double time) {
     MutexLock lock(chart_mutex_);
     chart_.push_back(std::make_pair(case_name, time));
+  }
+
+  void LogChart(LogLevel level = INFO, Logger* logger = NULL) const {
+    if (!logger) {
+      logger = &GetLogger();
+    }
+    const std::string chart_string = PrintChart();
+    logger->PushRawMessage(level, chart_string);
   }
 
   std::string PrintChart() const {
