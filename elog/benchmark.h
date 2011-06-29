@@ -10,10 +10,13 @@
 
 #define ELOG_I_BENCHMARK_1(name) \
   if (::LOG::ScopedBenchmark name = \
-      ::LOG::ScopedBenchmark(ELOG_I_STRINGIZE(name))); else
+      ::LOG::ScopedBenchmark(ELOG_I_STRINGIZE(name), "")); else
 
 #define ELOG_I_BENCHMARK_2(suite, name) \
+  ELOG_I_BENCHMARK_3(suite, name, "")
+
+#define ELOG_I_BENCHMARK_3(suite, name, message) \
   if (::LOG::ScopedBenchmark name = \
-      ::LOG::ScopedBenchmark(ELOG_I_STRINGIZE(name), &suite)); else
+      ::LOG::ScopedBenchmark(ELOG_I_STRINGIZE(name), message, &suite)); else
 
 #endif  // ELOG_BENCHMARK_H_

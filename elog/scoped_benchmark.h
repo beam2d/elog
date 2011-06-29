@@ -15,6 +15,7 @@ namespace LOG {
 class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
  public:
   explicit ScopedBenchmark(const std::string& title,
+                           const std::string& message,
                            BenchmarkSuite* suite = NULL,
                            Logger* logger = NULL,
                            LogLevel level = INFO)
@@ -23,7 +24,7 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
         suite_(suite),
         level_(level),
         done_(false) {
-    logger_.PushRawMessage(level, title + "...");
+    logger_.PushRawMessage(level, title + ": " + message + "...");
   }
 
   ~ScopedBenchmark() {
@@ -61,6 +62,7 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
     return message.str();
   }
 
+  std::string name_;
   std::string title_;
   Timer timer_;
   Logger& logger_;
