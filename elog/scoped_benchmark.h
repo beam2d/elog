@@ -34,6 +34,10 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
     return false;
   }
 
+  double GetTime() const {
+    return timer_;
+  }
+
   void Print() {
     if (done_) return;
     done_ = true;
