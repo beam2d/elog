@@ -4,7 +4,13 @@
 #ifndef ELOG_THREAD_POSIX_H_
 #define ELOG_THREAD_POSIX_H_
 
-#include <tr1/functional>
+#include "config.h"
+
+#ifdef ELOG_I_USE_TR1_HEADER
+# include <tr1/functional>
+#else
+# include <functional>
+#endif
 #include <pthread.h>
 #include "util.h"
 

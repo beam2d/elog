@@ -18,7 +18,7 @@ class Timer {
       : start_sec_(GetTimeSec()) {
   }
 
-  operator double() const {
+  double GetTime() const {
     const double now = GetTimeSec();
     return now - start_sec_;
   }

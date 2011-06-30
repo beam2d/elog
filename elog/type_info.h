@@ -4,8 +4,10 @@
 #ifndef ELOG_TYPE_INFO_H_
 #define ELOG_TYPE_INFO_H_
 
+#include "config.h"
+
 #include <typeinfo>
-#ifdef __GNUC__
+#ifdef ELOG_I_USE_TR1_HEADER
 # include <tr1/functional>
 #else
 # include <functional>
@@ -30,6 +32,12 @@ const char* GlobalTypeName<T>::name = typeid(T).name();
 
 class TypeInfo {
  public:
+  struct Hash : std::unary_function<TypeInfo, std::size_t> {
+    std::size_t operator()(TypeInfo type_info) const {
+      return std::tr1::hash<const char*>()(type_info.global_type_name_);
+    }
+  };
+
   template <typename T>
   explicit TypeInfo(Type<T>)
       : global_type_name_(GlobalTypeName<T>::name) {
@@ -40,8 +48,6 @@ class TypeInfo {
   }
 
  private:
-  friend struct std::tr1::hash<TypeInfo>;
-
 #define ELOG_I_DEFINE_TYPEINFO_OPERATOR(op) \
   friend bool operator op(const TypeInfo& lhs, const TypeInfo& rhs) { \
     return lhs.global_type_name_ op rhs.global_type_name_; \
@@ -60,19 +66,5 @@ class TypeInfo {
 };
 
 }  // namespace LOG
-
-namespace std {
-namespace tr1 {
-
-template <>
-struct hash< ::LOG::TypeInfo>
-    : std::unary_function< ::LOG::TypeInfo, std::size_t> {
-  std::size_t operator()(::LOG::TypeInfo type_info) const {
-    return hash<const char*>()(type_info.global_type_name_);
-  }
-};
-
-}  // namespace std::tr1
-}  // namespace std
 
 #endif  // ELOG_TYPE_INFO_H_

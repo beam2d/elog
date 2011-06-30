@@ -4,7 +4,12 @@
 #ifndef ELOG_DEMANGLE_GXX_H_
 #define ELOG_DEMANGLE_GXX_H_
 
-#include <tr1/memory>
+#include "config.h"
+#ifdef ELOG_I_USE_TR1_HEADER
+# include <tr1/memory>
+#else
+# include <memory>
+#endif
 #include <cxxabi.h>
 
 namespace LOG {

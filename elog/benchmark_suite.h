@@ -14,6 +14,7 @@
 #include "logger.h"
 #include "logger_factory.h"
 #include "mutex.h"
+#include "timer.h"
 
 namespace LOG {
 
@@ -38,7 +39,7 @@ class BenchmarkSuite {
 
   void AddCase(const std::string& case_name, double time) {
     MutexLock lock(chart_mutex_);
-    chart_.push_back(std::make_pair(case_name, time));
+            chart_.push_back(std::make_pair(case_name, time));
   }
 
   void LogChart(LogLevel level = INFO, Logger* logger = NULL) const {
@@ -61,8 +62,9 @@ class BenchmarkSuite {
 
     PrintTopRow(title_width, kTimeColumnTitle, stream);
     PrintHorizontalSeparator(title_width, time_column_width, stream);
-    SetResultFormat(stream);
     PrintAllCasesResult(title_width, time_column_width, stream);
+    PrintHorizontalSeparator(title_width, time_column_width, stream);
+    PrintStatistics(title_width, time_column_width, stream);
 
     stream << std::flush;
 
@@ -93,10 +95,6 @@ class BenchmarkSuite {
        << std::setw(time_column_width) << std::setfill('-') << "" << '\n';
   }
 
-  void SetResultFormat(std::ostream& os) const {
-    os << std::setfill(' ') << std::fixed << std::setprecision(precision_);
-  }
-
   void PrintAllCasesResult(std::size_t title_width,
                            std::size_t time_column_width,
                            std::ostream& os) const {
@@ -111,8 +109,24 @@ class BenchmarkSuite {
                        double time,
                        std::size_t time_column_width,
                        std::ostream& os) const {
+    SetResultFormat(os);
     os << std::left << std::setw(title_width) << case_title << " | "
        << std::right << std::setw(time_column_width) << time << '\n';
+  }
+
+  void PrintStatistics(std::size_t title_width,
+                       std::size_t time_column_width,
+                       std::ostream& os) const {
+    const double time_sum = GetTimeSum();
+    const double total = timer_.GetTime();
+    const double other = total - time_sum;
+
+    PrintCaseResult("(other)", title_width, other, time_column_width, os);
+    PrintCaseResult("total", title_width, total, time_column_width, os);
+  }
+
+  void SetResultFormat(std::ostream& os) const {
+    os << std::setfill(' ') << std::fixed << std::setprecision(precision_);
   }
 
   std::size_t GetTimeColumnWidth() const {
@@ -132,8 +146,17 @@ class BenchmarkSuite {
     return length;
   }
 
+  double GetTimeSum() const {
+    double sum = 0.0;
+    for (std::size_t i = 0; i < chart_.size(); ++i) {
+      sum += chart_[i].second;
+    }
+    return sum;
+  }
+
   mutable Mutex chart_mutex_;
   Chart chart_;
+  Timer timer_;
   std::string title_;
   int precision_;
 };

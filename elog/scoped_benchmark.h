@@ -36,7 +36,7 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
   }
 
   double GetTime() const {
-    return timer_;
+    return timer_.GetTime();
   }
 
   void Print() {
@@ -48,7 +48,7 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
 
  private:
   void PrintWithoutCheck() const {
-    const double time = timer_;
+    const double time = timer_.GetTime();
     if (suite_) {
       suite_->AddCase(title_, time);
     }

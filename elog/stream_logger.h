@@ -4,8 +4,10 @@
 #ifndef ELOG_STREAM_LOGGER_H_
 #define ELOG_STREAM_LOGGER_H_
 
+#include "config.h"
+
 #include <iostream>
-#ifdef __GNUC__
+#ifdef ELOG_I_USE_TR1_HEADER
 # include <tr1/unordered_map>
 #else
 # include <unordered_map>
@@ -94,7 +96,7 @@ class StreamLogger : public Logger {
   Mutex push_message_mutex_;
   Mutex verbosity_mutex_;
   LogLevel level_;
-  std::tr1::unordered_map<TypeInfo, int> verbosities_;
+  std::tr1::unordered_map<TypeInfo, int, TypeInfo::Hash> verbosities_;
 };
 
 }  // namespace LOG
