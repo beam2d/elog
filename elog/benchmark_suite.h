@@ -139,7 +139,8 @@ class BenchmarkSuite {
   }
 
   std::size_t GetMaxTitleLength() const {
-    std::size_t length = title_.size();
+    static const std::size_t kLeftColumnMinSize = 7;
+    std::size_t length = std::max(kLeftColumnMinSize, title_.size());
     for (std::size_t i = 0; i < chart_.size(); ++i) {
       length = std::max(length, chart_[i].first.size());
     }
