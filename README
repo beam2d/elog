@@ -165,5 +165,4 @@ are exactly same as LOG and CHECK, respectively.
 ------------------------------------------------------------------------------
 Other note
 
-NOTE(g++): LOG(...) and BENCHMARK(...) uses compiler extensions, so they will
-produce compilation error with -ansi or -std=c++0x (-std=gnu++0x can copmile).
+NOTE(g++): LOG(...) and BENCHMARK(...) uses compiler extensions.
