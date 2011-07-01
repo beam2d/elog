@@ -72,10 +72,10 @@ class Thread : Noncopyable {
   }
 
  private:
-  static int WINAPI StaticThreadBody(LPVOID self_ptr) {
+  static unsigned int WINAPI StaticThreadBody(LPVOID self_ptr) {
     Thread& self = *reinterpret_cast<Thread*>(self_ptr);
     self.thread_body_();
-    return NULL;
+    return 0;
   }
 
   ScopedThreadHandle thread_handle_;
