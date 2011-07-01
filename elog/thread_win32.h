@@ -56,7 +56,7 @@ class Thread : Noncopyable {
 
   void Run() {
     HANDLE handle = reinterpret_cast<HANDLE>(
-            _beginthreadex(NULL, 0, StaticThreadBody, NULL, 0, NULL));
+            _beginthreadex(NULL, 0, StaticThreadBody, this, 0, NULL));
     thread_handle_.Reset(handle);
   }
 

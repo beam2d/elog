@@ -20,7 +20,8 @@ namespace LOG {
 // TODO(S.Tokui): Write unittest.
 inline int CompareAndSwap(volatile int& val, int oldval, int newval) {
 #ifdef _WIN32
-  return InterlockedCompareExchange(&val, newval, oldval);
+  return InterlockedCompareExchange(
+      reinterpret_cast<volatile unsigned int*>(&val), newval, oldval);
 #elif defined(ELOG_I_ATOMIC_CAS_USE_MACOSX_OSATOMIC)
   return OSAtomicCompareAndSwapIntBarrier(oldval, newval, &val) ? oldval : val;
 #elif defined(ELOG_I_ATOMIC_CAS_USE_GNUC_EXTENSION)

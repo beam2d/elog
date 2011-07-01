@@ -6,6 +6,13 @@
 
 #include <exception>
 #include <string>
+
+// Identifier ERROR conflicts macro
+#ifdef _WIN32
+# include <windows.h>
+# undef ERROR
+#endif
+
 #include "type_info.h"
 #include "util.h"
 
