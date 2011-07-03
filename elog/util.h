@@ -40,6 +40,28 @@ void CheckedDelete(T* p) {
   delete p;
 }
 
+
+typedef char TrueType;
+typedef struct { char a[2]; } FalseType;
+
+template <typename T>
+class IsContainer {
+ private:
+  template <typename Type>
+  static TrueType HasConstIterator(typename Type::value_type*);
+
+  template <typename Type>
+  static FalseType HasConstIterator(...);
+
+ public:
+  static const bool value =
+      sizeof(HasConstIterator<T>(0)) == sizeof(TrueType);
+};
+
 }  // namespace LOG
+
+// #include <vector>
+// static int v[LOG::IsContainer<std::vector<int> >::value ? 1 : -1];
+// static int w[LOG::IsContainer<char>::value ? -1 : 1];
 
 #endif  // ELOG_UTIL_H_

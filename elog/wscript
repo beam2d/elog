@@ -19,5 +19,8 @@ def build(bld):
       source = 'type_info_test.cc',
       target = 'type_info_test')
   bld(features = 'cxx cprogram gtest',
+      source = 'put_as_string_test.cc',
+      target = 'put_as_string_test')
+  bld(features = 'cxx cprogram gtest',
       source = 'elog_test.cc',
       target = 'elog_test')

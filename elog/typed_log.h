@@ -9,7 +9,7 @@
 #include <string>
 #include "logger.h"
 #include "logger_factory.h"
-#include "string_builder.h"
+#include "put_as_string.h"
 #include "type_info.h"
 
 namespace LOG {
@@ -30,7 +30,7 @@ class TypedLog {
 
   template <typename T>
   TypedLog& operator<<(const T& t) {
-    string_builder_.AddValue(t);
+    PutAsString(t, stream_);
     return *this;
   }
 
@@ -39,14 +39,13 @@ class TypedLog {
   }
 
   void PushMessage() const {
-    const std::string message = string_builder_.GetString();
     logger_.PushTypedMessage(type_info_, verbosity_,
-                             source_file_name_, line_number_, message);
+                             source_file_name_, line_number_, stream_.str());
   }
 
  private:
   Logger& logger_;
-  StringBuilder string_builder_;
+  std::ostringstream stream_;
   TypeInfo type_info_;
   int verbosity_;
   const char* source_file_name_;

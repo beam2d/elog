@@ -8,7 +8,7 @@
 #include <string>
 #include "logger.h"
 #include "logger_factory.h"
-#include "string_builder.h"
+#include "put_as_string.h"
 
 namespace LOG {
 
@@ -25,7 +25,7 @@ class GeneralLog {
 
   template <typename T>
   GeneralLog& operator<<(const T& t) {
-    string_builder_.AddValue(t);
+    PutAsString(t, stream_);
     return *this;
   }
 
@@ -34,27 +34,26 @@ class GeneralLog {
   }
 
   void PushMessage() const {
-    const std::string message = string_builder_.GetString();
-    logger_.PushMessage(LEVEL, source_file_name_, line_number_, message);
+    logger_.PushMessage(LEVEL, source_file_name_, line_number_, stream_.str());
   }
 
  private:
   Logger& logger_;
-  StringBuilder string_builder_;
+  std::ostringstream stream_;
   const char* source_file_name_;
   int line_number_;
 };
 
 template <>
 void GeneralLog<FATAL>::PushMessage() const {
-  const std::string message = string_builder_.GetString();
-  logger_.PushFatalMessageAndThrow(source_file_name_, line_number_, message);
+  logger_.PushFatalMessageAndThrow(
+      source_file_name_, line_number_, stream_.str());
 }
 
 template <>
 void GeneralLog<CHECK>::PushMessage() const {
-  const std::string message = string_builder_.GetString();
-  logger_.PushCheckMessageAndThrow(source_file_name_, line_number_, message);
+  logger_.PushCheckMessageAndThrow(
+      source_file_name_, line_number_, stream_.str());
 }
 
 }  // namespace LOG
