@@ -8,6 +8,7 @@
 #include <string>
 #include "logger.h"
 #include "logger_factory.h"
+#include "string_builder.h"
 
 namespace LOG {
 
@@ -24,19 +25,7 @@ class GeneralLog {
 
   template <typename T>
   GeneralLog& operator<<(const T& t) {
-    string_builder_ << t;
-    return *this;
-  }
-
-  // Output 1-byte value as an integer rather than character.
-  GeneralLog& operator<<(signed char t) {
-    string_builder_ << static_cast<int>(t);
-    return *this;
-  }
-
-  // ditto
-  GeneralLog& operator<<(unsigned char t) {
-    string_builder_ << static_cast<unsigned int>(t);
+    string_builder_.AddValue(t);
     return *this;
   }
 
@@ -45,26 +34,26 @@ class GeneralLog {
   }
 
   void PushMessage() const {
-    const std::string& message = string_builder_.str();
+    const std::string message = string_builder_.GetString();
     logger_.PushMessage(LEVEL, source_file_name_, line_number_, message);
   }
 
  private:
   Logger& logger_;
-  std::ostringstream string_builder_;
+  StringBuilder string_builder_;
   const char* source_file_name_;
   int line_number_;
 };
 
 template <>
 void GeneralLog<FATAL>::PushMessage() const {
-  const std::string& message = string_builder_.str();
+  const std::string message = string_builder_.GetString();
   logger_.PushFatalMessageAndThrow(source_file_name_, line_number_, message);
 }
 
 template <>
 void GeneralLog<CHECK>::PushMessage() const {
-  const std::string& message = string_builder_.str();
+  const std::string message = string_builder_.GetString();
   logger_.PushCheckMessageAndThrow(source_file_name_, line_number_, message);
 }
 

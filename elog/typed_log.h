@@ -9,6 +9,7 @@
 #include <string>
 #include "logger.h"
 #include "logger_factory.h"
+#include "string_builder.h"
 #include "type_info.h"
 
 namespace LOG {
@@ -29,19 +30,7 @@ class TypedLog {
 
   template <typename T>
   TypedLog& operator<<(const T& t) {
-    string_builder_ << t;
-    return *this;
-  }
-
-  // Output 1-byte value as an integer rather than a character.
-  TypedLog& operator<<(signed char t) {
-    string_builder_ << static_cast<int>(t);
-    return *this;
-  }
-
-  // ditto
-  TypedLog& operator<<(unsigned char t) {
-    string_builder_ << static_cast<unsigned int>(t);
+    string_builder_.AddValue(t);
     return *this;
   }
 
@@ -50,14 +39,14 @@ class TypedLog {
   }
 
   void PushMessage() const {
-    const std::string& message = string_builder_.str();
+    const std::string message = string_builder_.GetString();
     logger_.PushTypedMessage(type_info_, verbosity_,
                              source_file_name_, line_number_, message);
   }
 
  private:
   Logger& logger_;
-  std::ostringstream string_builder_;
+  StringBuilder string_builder_;
   TypeInfo type_info_;
   int verbosity_;
   const char* source_file_name_;
