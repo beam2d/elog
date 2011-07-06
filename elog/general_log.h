@@ -45,13 +45,13 @@ class GeneralLog {
 };
 
 template <>
-void GeneralLog<FATAL>::PushMessage() const {
+inline void GeneralLog<FATAL>::PushMessage() const {
   logger_.PushFatalMessageAndThrow(
       source_file_name_, line_number_, stream_.str());
 }
 
 template <>
-void GeneralLog<CHECK>::PushMessage() const {
+inline void GeneralLog<CHECK>::PushMessage() const {
   logger_.PushCheckMessageAndThrow(
       source_file_name_, line_number_, stream_.str());
 }
