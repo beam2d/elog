@@ -23,6 +23,12 @@ class GeneralLog {
         line_number_(line_number) {
   }
 
+  GeneralLog(const GeneralLog& general_log)
+      : logger_(general_log.logger_),
+        source_file_name_(general_log.source_file_name_),
+        line_number_(general_log.line_number_) {
+  }
+
   template <typename T>
   GeneralLog& operator<<(const T& t) {
     PutAsString(t, stream_);

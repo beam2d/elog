@@ -7,24 +7,34 @@
 #include <string>
 #include "benchmark_suite.h"
 #include "elog.h"
+#include "general_log.h"
 #include "safe_bool.h"
 #include "timer.h"
 
 namespace LOG {
 
-class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
+template <LogLevel LEVEL>
+class ScopedBenchmark : public SafeBool<ScopedBenchmark<LEVEL> > {
  public:
-  explicit ScopedBenchmark(const std::string& title,
-                           const std::string& message,
-                           BenchmarkSuite* suite = NULL,
-                           Logger* logger = NULL,
-                           LogLevel level = INFO)
-      : title_(title),
-        logger_(logger ? *logger : GetLogger()),
+  ScopedBenchmark(const std::string& title,
+                  const char* source_file_name,
+                  int line_number,
+                  BenchmarkSuite* suite = NULL,
+                  Logger* logger = NULL)
+      : general_log_(source_file_name, line_number, logger),
+        title_(title),
         suite_(suite),
-        level_(level),
         done_(false) {
-    logger_.PushRawMessage(level, title + ": " + message + "...");
+    GeneralLog<LEVEL> start_log(source_file_name, line_number, logger);
+    start_log << title << ": start...";
+    start_log.PushMessage();
+  }
+
+  ScopedBenchmark(const ScopedBenchmark& scoped_benchmark)
+      : general_log_(scoped_benchmark.general_log_),
+        title_(scoped_benchmark.title_),
+        suite_(scoped_benchmark.suite_),
+        done_(scoped_benchmark.done_) {
   }
 
   ~ScopedBenchmark() {
@@ -47,27 +57,19 @@ class ScopedBenchmark : public SafeBool<ScopedBenchmark> {
   }
 
  private:
-  void PrintWithoutCheck() const {
+  void PrintWithoutCheck() {
     const double time = timer_.GetTime();
     if (suite_) {
       suite_->AddCase(title_, time);
     }
-    const std::string message = BuildMessage(time);
-    logger_.PushRawMessage(level_, message);
+    general_log_ << title_ << ": " << time << " sec";
+    general_log_.PushMessage();
   }
 
-  std::string BuildMessage(double time) const {
-    std::ostringstream message;
-    message << title_ << ": " << time << " sec";
-    return message.str();
-  }
-
-  std::string name_;
+  GeneralLog<LEVEL> general_log_;
   std::string title_;
   Timer timer_;
-  Logger& logger_;
   BenchmarkSuite* suite_;
-  LogLevel level_;
 
   bool done_;
 };

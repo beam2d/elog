@@ -28,6 +28,14 @@ class TypedLog {
         line_number_(line_number) {
   }
 
+  TypedLog(const TypedLog& typed_log)
+      : logger_(typed_log.logger_),
+        type_info_(typed_log.type_info_),
+        verbosity_(typed_log.verbosity_),
+        source_file_name_(typed_log.source_file_name_),
+        line_number_(typed_log.line_number_) {
+  }
+
   template <typename T>
   TypedLog& operator<<(const T& t) {
     PutAsString(t, stream_);

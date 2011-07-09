@@ -59,13 +59,13 @@ struct VoidEmitter {
 // Length of tuple
 #ifdef _MSC_VER
 # define ELOG_I_TUPLE_LEN(...) \
-  ELOG_I_TUPLE_LEN_I ELOG_I_LPAR _, __VA_ARGS__, 3, 2, 1, 0, _ ELOG_I_RPAR
+  ELOG_I_TUPLE_LEN_I ELOG_I_LPAR _, __VA_ARGS__, 5, 4, 3, 2, 1, 0, _ ELOG_I_RPAR
 #else
 # define ELOG_I_TUPLE_LEN(...) \
-  ELOG_I_TUPLE_LEN_I(_, ##__VA_ARGS__, 3, 2, 1, 0, _)
+  ELOG_I_TUPLE_LEN_I(_, ##__VA_ARGS__, 5, 4, 3, 2, 1, 0, _)
 #endif
 
-#define ELOG_I_TUPLE_LEN_I(_0, _1, _2, _3, n, ...) n
+#define ELOG_I_TUPLE_LEN_I(_0, _1, _2, _3, _4, _5, n, ...) n
 
 // Macro overload
 #define ELOG_I_OVERLOAD(name, ...) \
