@@ -155,6 +155,21 @@ current global logger by calling LogChart.
 
 It will emits chart of results.
 
+BENCHMARK macro also has typed versions.
+
+  struct Keyboard {};
+
+  // Benchmark of Keyboard with verbosity 1
+  BENCHMARK(Keyboard, 1, bench_kb) {
+    ...
+  }
+
+  LOG::BenchmarkSuite suite("keyboard bench");
+
+  BENCHMARK(suite, Keyboard, 1, bench_kb) {
+    ...
+  }
+
 ------------------------------------------------------------------------------
 Debug versions
 
