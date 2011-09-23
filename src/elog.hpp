@@ -23,15 +23,11 @@ namespace LOG
 
 template<typename T, typename U = void>
 struct enable_if_exist
-{
-  typedef U type;
-};
+{ typedef U type; };
 
 template<typename T>
 struct identity
-{
-  typedef T type;
-};
+{ typedef T type; };
 
 template<typename T,
          typename enable_if_exist<typename T::value_type, int>::type = 0,
@@ -385,6 +381,7 @@ struct benchmark
 
 #define BENCHMARK(varname, ...) \
   if (auto varname = ::LOG::benchmark()); \
-  else if (!&::LOG::print_arguments(varname, __VA_ARGS__)); else
+  else if (!&::LOG::print_arguments(varname, __VA_ARGS__)); \
+  else
 
 #endif  // ELOG_ELOG_HPP_
