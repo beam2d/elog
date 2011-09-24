@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -45,9 +46,20 @@ struct is_range
 {};
 
 
+template<typename T>
+struct range_value
+{
+  typedef typename std::iterator_traits<typename T::iterator>::value_type type;
+};
+
+template<typename T, std::size_t N>
+struct range_value<T[N]>
+{ typedef T type; };
+
+
 template<typename T,
-         typename enable_if_exist<typename T::first_type>::type = 0,
-         typename enable_if_exist<typename T::second_type>::type = 0>
+         typename enable_if_exist<typename T::first_type, int>::type = 0,
+         typename enable_if_exist<typename T::second_type, int>::type = 0>
 std::true_type
 is_pair_fn(int);
 
@@ -77,7 +89,7 @@ T static_holder<T, A>::value;
 // pretty print to stream
 
 template<typename T, typename Stream>
-void
+inline void
 pretty_print_internal(const T& t, Stream& stream, ...)
 { stream << t; }
 
@@ -94,39 +106,66 @@ pretty_print_internal(const T& pair, Stream& stream, int)
   stream << ')';
 }
 
+template<typename Range,
+         typename Value =
+         typename std::decay<typename range_value<Range>::type>::type>
+struct range_pretty_printer
+{
+  template<typename Stream>
+  void
+  operator()(const Range& range, Stream& stream) const
+  {
+    stream << '[';
+
+    bool is_tail = false;
+    for (const auto& elem : range) {
+      if (is_tail) stream << ", ";
+
+      is_tail = true;
+      pretty_print_internal(elem, stream, 0);
+    }
+
+    stream << ']';
+  }
+};
+
+template<typename Range>
+struct range_pretty_printer<Range, char>
+{
+  template<typename Stream>
+  void
+  operator()(const Range& str, Stream& stream) const
+  { for (const auto ch : str) stream << ch; }
+};
+
 template<typename T,
          typename Stream,
          typename std::enable_if<is_range<T>::value, int>::type = 0>
-void
+inline void
 pretty_print_internal(const T& range, Stream& stream, int)
-{
-  stream << '[';
+{ range_pretty_printer<T>()(range, stream); }
 
-  bool is_tail = false;
-  for (const auto& elem : range) {
-    if (is_tail) stream << ", ";
+template<typename T,
+         typename Stream,
+         typename std::enable_if<
+           std::is_same<T, signed char>::value, int>::type = 0>
+inline void
+pretty_print_internal(T sc, Stream& stream, int)
+{ stream << static_cast<int>(sc); }
 
-    is_tail = true;
-    pretty_print_internal(elem, stream, 0);
-  }
-
-  stream << ']';
-}
-
-template<typename Stream>
-void
-pretty_print_internal(signed char t, Stream& stream, int)
-{ stream << static_cast<int>(t); }
-
-template<typename Stream>
-void
-pretty_print_internal(unsigned char t, Stream& stream, int)
-{ stream << static_cast<unsigned int>(t); }
+template<typename T,
+         typename Stream,
+         typename std::enable_if<
+           std::is_same<T, unsigned char>::value, int>::type = 0>
+inline void
+pretty_print_internal(T uc, Stream& stream, int)
+{ stream << static_cast<unsigned int>(uc); }
 
 template<typename T, typename Stream>
-void
+inline void
 pretty_print(const T& t, Stream& stream)
 { pretty_print_internal(t, stream, 0); }
+
 
 template<typename Stream>
 void
@@ -196,7 +235,7 @@ struct stream_logger
   virtual
   void
   write(const std::string& message) const
-  { (*os_) << message; }
+  { (*os_) << message << std::endl; }
 
  private:
   std::ostream* os_;
@@ -226,6 +265,14 @@ set_stream(std::ostream& os)
 
 struct message_builder
 {
+  message_builder()
+  {}
+
+  message_builder(const message_builder& mb)
+  {
+    oss_ << mb.oss_.str();
+  }
+
   template<typename T>
   void
   operator()(const T& t)
@@ -306,6 +353,13 @@ struct benchmark
         done_(false)
   {}
 
+  benchmark(const benchmark& b)
+      : logger_(b.logger_),
+        start_(b.start_),
+        title_builder_(b.title_builder_),
+        done_(b.done_)
+  {}
+
   explicit
   operator bool() const
   { return false; }
@@ -317,7 +371,7 @@ struct benchmark
   benchmark&
   operator<<(const T& t)
   {
-    title_builder_ << t;
+    title_builder_(t);
     return *this;
   }
 
