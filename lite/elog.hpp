@@ -100,9 +100,9 @@ void
 pretty_print_internal(const T& pair, Stream& stream, int)
 {
   stream << '(';
-  pretty_print_internal(pair.first, stream, 0);
+  pretty_print(pair.first, stream);
   stream << ", ";
-  pretty_print_internal(pair.second, stream, 0);
+  pretty_print(pair.second, stream);
   stream << ')';
 }
 
@@ -122,7 +122,7 @@ struct range_pretty_printer
       if (is_tail) stream << ", ";
 
       is_tail = true;
-      pretty_print_internal(elem, stream, 0);
+      pretty_print(elem, stream);
     }
 
     stream << ']';
@@ -150,7 +150,7 @@ template<typename T,
          typename std::enable_if<
            std::is_same<T, signed char>::value, int>::type = 0>
 inline void
-pretty_print_internal(T sc, Stream& stream, int)
+pretty_print_internal(const T& sc, Stream& stream, int)
 { stream << static_cast<int>(sc); }
 
 template<typename T,
@@ -158,7 +158,7 @@ template<typename T,
          typename std::enable_if<
            std::is_same<T, unsigned char>::value, int>::type = 0>
 inline void
-pretty_print_internal(T uc, Stream& stream, int)
+pretty_print_internal(const T& uc, Stream& stream, int)
 { stream << static_cast<unsigned int>(uc); }
 
 template<typename T, typename Stream>
