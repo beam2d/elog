@@ -14,4 +14,6 @@ def configure(cnf):
   cnf.env.CXXFLAGS = ['std=c++0x', '-g', '-W', '-Wall', '-O3']
 
 def build(bld):
-  bld.recurse('src')
+  bld.recurse('elog')
+  bld.recurse('lite')
+

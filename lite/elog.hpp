@@ -1,25 +1,20 @@
 // Copyright (c) 2011 Seiya Tokui <beam.web@gmail.com>. All Rights Reserved.
 // This source code is distributed under MIT License in LICENSE file.
 
-#ifndef ELOG_ELOG_HPP_
-#define ELOG_ELOG_HPP_
+#ifndef ELOG_HPP_
+#define ELOG_HPP_
 
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 
-#ifdef _WIN32
-# include <windows.h>
-#else
-# include <sys/time.h>
-#endif
-
 namespace LOG
 {
 
-// utility
+// meta functions
 
 template<typename T, typename U = void>
 struct enable_if_exist
@@ -66,62 +61,36 @@ struct is_pair
 {};
 
 
-// time
+// static variables definition
 
-inline double
-gettime_sec()
-{
-#ifdef _WIN32
-  LARGE_INTEGER t, f;
-  QueryPerformanceCounter(&t);
-  QueryPerformanceFrequency(&f);
-  return t.QuadPart * 1.0 / f.QuadPart;
-#else
-  timeval tv;
-  gettimeofday(&tv, 0);
-  return tv.tv_sec + tv.tv_usec * 1e-6;
-#endif
-}
+enum avoid_odr
+{ AVOID_ODR };
 
-template<typename Stream>
-void
-pritty_print_time(Stream& stream, double sec)
-{
-  long long min = sec / 60;
-  sec -= min * 60;
-  long long hour = min / 60;
-  min -= hour * 60;
-  long long day = hour / 24;
-  hour -= day * 24;
+template<typename T, avoid_odr = AVOID_ODR>
+struct static_holder
+{ static T value; };
 
-  if (min > 0) {
-    if (hour > 0) {
-      if (day > 0) stream << day << "d ";
-      stream << hour << "h ";
-    }
-    stream << min << "m ";
-  }
-  stream << sec << "s";
-}
+template<typename T, avoid_odr A>
+T static_holder<T, A>::value;
 
 
-// print value to output stream
+// pretty print to stream
 
 template<typename T, typename Stream>
 void
-pritty_print_internal(const T& t, Stream& stream, ...)
+pretty_print_internal(const T& t, Stream& stream, ...)
 { stream << t; }
 
 template<typename T,
          typename Stream,
          typename std::enable_if<is_pair<T>::value, int>::type = 0>
 void
-pritty_print_internal(const T& pair, Stream& stream, int)
+pretty_print_internal(const T& pair, Stream& stream, int)
 {
   stream << '(';
-  pritty_print_internal(pair.first, stream, 0);
+  pretty_print_internal(pair.first, stream, 0);
   stream << ", ";
-  pritty_print_internal(pair.second, stream, 0);
+  pretty_print_internal(pair.second, stream, 0);
   stream << ')';
 }
 
@@ -129,7 +98,7 @@ template<typename T,
          typename Stream,
          typename std::enable_if<is_range<T>::value, int>::type = 0>
 void
-pritty_print_internal(const T& range, Stream& stream, int)
+pretty_print_internal(const T& range, Stream& stream, int)
 {
   stream << '[';
 
@@ -138,7 +107,7 @@ pritty_print_internal(const T& range, Stream& stream, int)
     if (is_tail) stream << ", ";
 
     is_tail = true;
-    pritty_print_internal(elem, stream, 0);
+    pretty_print_internal(elem, stream, 0);
   }
 
   stream << ']';
@@ -146,18 +115,42 @@ pritty_print_internal(const T& range, Stream& stream, int)
 
 template<typename Stream>
 void
-pritty_print_internal(signed char t, Stream& stream, int)
+pretty_print_internal(signed char t, Stream& stream, int)
 { stream << static_cast<int>(t); }
 
 template<typename Stream>
 void
-pritty_print_internal(unsigned char t, Stream& stream, int)
+pretty_print_internal(unsigned char t, Stream& stream, int)
 { stream << static_cast<unsigned int>(t); }
 
 template<typename T, typename Stream>
 void
-pritty_print(const T& t, Stream& stream)
-{ pritty_print_internal(t, stream, 0); }
+pretty_print(const T& t, Stream& stream)
+{ pretty_print_internal(t, stream, 0); }
+
+template<typename Stream>
+void
+pretty_print_timesec(Stream& stream, double sec)
+{
+  stream << sec << " sec";
+
+  long long min = sec / 60;
+  sec -= min * 60;
+  long long hour = min / 60;
+  min -= hour * 60;
+  long long day = hour / 24;
+  hour -= day * 24;
+
+  if (min > 0) {
+    stream << " (";
+    if (hour > 0) {
+      if (day > 0) stream << day << "d ";
+      stream << hour << "h ";
+    }
+    stream << min << "m ";
+    stream << sec << "s)";
+  }
+}
 
 
 // argument list to stream
@@ -209,16 +202,6 @@ struct stream_logger
   std::ostream* os_;
 };
 
-enum avoid_odr
-{ AVOID_ODR };
-
-template<typename T, avoid_odr = AVOID_ODR>
-struct static_holder
-{ static T value; };
-
-template<typename T, avoid_odr A>
-T static_holder<T, A>::value;
-
 struct global_logger_holder
 {
   global_logger_holder()
@@ -239,14 +222,14 @@ set_stream(std::ostream& os)
 { static_holder<stream_logger>::value.set_stream(os); }
 
 
-// message construction
+// message construction and emission
 
 struct message_builder
 {
   template<typename T>
   void
   operator()(const T& t)
-  { pritty_print(t, oss_); }
+  { pretty_print(t, oss_); }
 
   std::string
   get() const
@@ -274,10 +257,6 @@ struct log_emitter
     message_builder_(t);
     return *this;
   }
-
-  log_emitter&
-  self()
-  { return *this; }
 
   void
   emit() const
@@ -316,14 +295,14 @@ struct benchmark
 {
   benchmark()
       : logger_(get_logger()),
-        start_sec_(gettime_sec()),
+        start_(std::chrono::system_clock::now()),
         done_(false)
   {}
 
   explicit
   benchmark(logger_base& logger)
       : logger_(logger),
-        start_sec_(gettime_sec()),
+        start_(std::chrono::system_clock::now()),
         done_(false)
   {}
 
@@ -342,29 +321,32 @@ struct benchmark
     return *this;
   }
 
+  std::chrono::system_clock::duration
+  duration() const
+  { return std::chrono::system_clock::now() - start_; }
+
   double
-  gettime() const
-  { return gettime_sec() - start_sec_; }
+  seconds() const
+  {
+    const auto d = duration();
+    const auto us = std::chrono::duration_cast<std::chrono::microseconds>(d);
+    return static_cast<double>(us.count()) / 1000000;
+  }
 
   void
   push_message()
   {
     done_ = true;
-    const auto duration = gettime_sec() - start_sec_;
 
     log_emitter emitter(logger_);
-    emitter << title_builder_.get() << ": " << duration << " sec";
-    if (duration >= 60) {
-      emitter << " (";
-      pritty_print_time(emitter, duration);
-      emitter << ")";
-    }
+    emitter << title_builder_.get() << ": ";
+    pretty_print_timesec(emitter, seconds());
     emitter.emit();
   }
 
  private:
   logger_base& logger_;
-  double start_sec_;
+  std::chrono::system_clock::time_point start_;
 
   message_builder title_builder_;
 
@@ -373,15 +355,15 @@ struct benchmark
 
 }  // namespace LOG
 
-#define LOG() ::LOG::log_emission_trigger() & ::LOG::log_emitter().self()
+#define LOG() ::LOG::log_emission_trigger() & ::LOG::log_emitter()
 
 #define CHECK(cond) \
   (cond) ? (void)0 : \
-  ::LOG::check_emission_trigger() & ::LOG::log_emitter().self();
+  ::LOG::check_emission_trigger() & ::LOG::log_emitter()
 
 #define BENCHMARK(varname, ...) \
   if (auto varname = ::LOG::benchmark()); \
   else if (!&::LOG::print_arguments(varname, __VA_ARGS__)); \
   else
 
-#endif  // ELOG_ELOG_HPP_
+#endif  // ELOG_HPP_

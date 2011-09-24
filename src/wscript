@@ -1,2 +1,0 @@
-def build(bld):
-  bld.install_files('${PREFIX}/include/elog', bld.path.ant_glob('*.hpp'))
