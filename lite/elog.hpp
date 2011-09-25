@@ -4,6 +4,7 @@
 #ifndef ELOG_HPP_
 #define ELOG_HPP_
 
+#include <ctime>
 #include <chrono>
 #include <iostream>
 #include <iterator>
@@ -207,6 +208,23 @@ print_arguments(Stream& stream, const T& t, Args... args)
 }
 
 
+// get current datetime
+inline std::tm
+get_tm()
+{
+  auto timeval = std::time(nullptr);
+  std::tm tm;
+
+#ifdef _WIN32
+  localtime_s(&tm, &timeval);
+#else
+  localtime_r(&timeval, &tm);
+#endif
+
+  return tm;
+}
+
+
 // logger
 
 struct logger_base
@@ -235,7 +253,14 @@ struct stream_logger
   virtual
   void
   write(const std::string& message) const
-  { (*os_) << message << std::endl; }
+  {
+    auto tm = get_tm();
+
+    char buffer[64];
+    std::strftime(buffer, sizeof(buffer), "[%Y%m%d %X] ", &tm);
+
+    (*os_) << buffer << message << std::endl;
+  }
 
  private:
   std::ostream* os_;
@@ -269,9 +294,7 @@ struct message_builder
   {}
 
   message_builder(const message_builder& mb)
-  {
-    oss_ << mb.oss_.str();
-  }
+  { oss_ << mb.oss_.str(); }
 
   template<typename T>
   void
@@ -342,14 +365,14 @@ struct benchmark
 {
   benchmark()
       : logger_(get_logger()),
-        start_(std::chrono::system_clock::now()),
+        start_(std::chrono::high_resolution_clock::now()),
         done_(false)
   {}
 
   explicit
   benchmark(logger_base& logger)
       : logger_(logger),
-        start_(std::chrono::system_clock::now()),
+        start_(std::chrono::high_resolution_clock::now()),
         done_(false)
   {}
 
@@ -375,9 +398,9 @@ struct benchmark
     return *this;
   }
 
-  std::chrono::system_clock::duration
+  std::chrono::high_resolution_clock::duration
   duration() const
-  { return std::chrono::system_clock::now() - start_; }
+  { return std::chrono::high_resolution_clock::now() - start_; }
 
   double
   seconds() const
@@ -400,7 +423,7 @@ struct benchmark
 
  private:
   logger_base& logger_;
-  std::chrono::system_clock::time_point start_;
+  std::chrono::high_resolution_clock::time_point start_;
 
   message_builder title_builder_;
 
