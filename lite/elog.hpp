@@ -440,7 +440,7 @@ struct benchmark
 
 #define BENCHMARK(varname, ...) \
   if (auto varname = ::LOG::benchmark()); \
-  else if (!&::LOG::print_arguments(varname, __VA_ARGS__)); \
+  else if (::LOG::print_arguments(varname, __VA_ARGS__)); \
   else
 
 #endif  // ELOG_HPP_
