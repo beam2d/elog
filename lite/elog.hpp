@@ -365,16 +365,23 @@ struct benchmark
 {
   benchmark()
       : logger_(get_logger()),
-        start_(std::chrono::high_resolution_clock::now()),
         done_(false)
-  {}
+  { start(); }
 
   explicit
   benchmark(logger_base& logger)
       : logger_(logger),
-        start_(std::chrono::high_resolution_clock::now()),
         done_(false)
-  {}
+  { start(); }
+
+  explicit
+  benchmark(const std::string& title)
+      : logger_(get_logger()),
+        done_(false)
+  {
+    title_builder_(title);
+    start();
+  }
 
   benchmark(const benchmark& b)
       : logger_(b.logger_),
@@ -422,6 +429,10 @@ struct benchmark
   }
 
  private:
+  void
+  start()
+  { start_ = std::chrono::high_resolution_clock::now(); }
+
   logger_base& logger_;
   std::chrono::high_resolution_clock::time_point start_;
 
