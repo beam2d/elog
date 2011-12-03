@@ -441,6 +441,17 @@ struct benchmark
   bool done_;
 };
 
+template<typename Func>
+double
+count_sec(Func func)
+{
+  auto start = std::chrono::high_resolution_clock::now();
+  func();
+  auto duration = std::chrono::high_resolution_clock::now() - start;
+  auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
+  return static_cast<double>(us.count()) / 1000000;
+}
+
 }  // namespace LOG
 
 #define LOG() ::LOG::log_emission_trigger() & ::LOG::log_emitter()
