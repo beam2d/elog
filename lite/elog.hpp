@@ -27,13 +27,8 @@ struct identity
 { typedef T type; };
 
 template<typename T,
-         typename enable_if_exist<typename T::value_type, int>::type = 0,
-         typename enable_if_exist<typename T::iterator, int>::type = 0>
-std::true_type
-is_range_fn(int);
-
-template<typename T,
-          typename std::enable_if<std::is_array<T>::value, int>::type = 0>
+         typename enable_if_exist<
+           decltype(std::begin(*(T*)nullptr)), int>::type = 0>
 std::true_type
 is_range_fn(int);
 
@@ -50,12 +45,9 @@ struct is_range
 template<typename T>
 struct range_value
 {
-  typedef typename std::iterator_traits<typename T::iterator>::value_type type;
+  typedef typename std::iterator_traits<
+    decltype(std::begin(*(T*)nullptr))>::value_type type;
 };
-
-template<typename T, std::size_t N>
-struct range_value<T[N]>
-{ typedef T type; };
 
 
 template<typename T,
