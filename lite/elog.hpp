@@ -76,15 +76,12 @@ struct is_pair
 
 // static variables definition
 
-enum avoid_odr
-{ AVOID_ODR };
-
-template<typename T, avoid_odr = AVOID_ODR>
+template<typename T>
 struct static_holder
 { static T value; };
 
-template<typename T, avoid_odr A>
-T static_holder<T, A>::value;
+template<typename T>
+T static_holder<T>::value;
 
 
 // pretty print to stream
